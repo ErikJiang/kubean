@@ -75,6 +75,27 @@ kylin:
   - docker-ce-26.1.2-1.el8
   - docker-ce-cli-26.1.2-1.el8
 
+kylin-gfb:
+  - libselinux-devel
+  - python3-libselinux
+  - device-mapper-libs
+  - nss-tools
+  - conntrack
+  - container-selinux
+  - libseccomp
+  - chrony
+  - iputils
+  - openssl
+  - curl
+  - rsync
+  - socat
+  - unzip
+  - e2fsprogs
+  - xfsprogs
+  - ebtables
+  - bash-completion
+  - tar
+
 # https://download.docker.com/linux/ubuntu/
 ubuntu2004:
   - containerd.io=1.6.28-1
