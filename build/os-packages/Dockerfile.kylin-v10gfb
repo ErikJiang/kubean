@@ -1,0 +1,26 @@
+FROM rockylinux:8 as os-kylin-v10gfb
+ARG OS_VERSION=10
+ARG BUILD_TOOLS="dnf-utils dnf-plugins-core createrepo"
+
+WORKDIR /kylin/${OS_VERSION}/gfb/os
+COPY build/os-packages/repos/kylin.gfb.repo /etc/yum.repos.d/
+COPY build/os-packages/repos/kylin.sp3.repo /etc/yum.repos.d/
+COPY build/os-packages/packages.yml .
+COPY --from=mikefarah/yq:4.30.8 /usr/bin/yq /usr/bin/yq
+RUN yq eval '.common[],.yum[],.kylin-gfb[]' packages.yml > packages.list
+
+RUN ARCH=$(uname -m) \
+    && dnf install -y ${BUILD_TOOLS} \
+    && dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo \
+    && mkdir /etc/yum.repos.d.sp3/ && mv /etc/yum.repos.d/kylin.sp3.repo /etc/yum.repos.d.sp3/ \
+    && rm -rf /etc/yum.repos.d/Rocky* && dnf clean all && dnf makecache \
+    && while read -r line; do \
+        dnf -d 10 download --resolve --alldeps --destdir=${ARCH} ${line}; \
+    done <<<"$(sort -u packages.list)" \
+    && echo "Switched to sp3.repos for container-selinux due to gfb.repos dependency issues." \
+    && dnf -d 10 download --resolve --alldeps --destdir=${ARCH} \
+        "socat" "xfsprogs" "ebtables" "iputils" "libseccomp" "device-mapper-libs" "container-selinux" "python3-libselinux" \
+    && createrepo -d ${ARCH}
+
+FROM scratch
+COPY --from=os-kylin-v10gfb /kylin /resources/kylin
