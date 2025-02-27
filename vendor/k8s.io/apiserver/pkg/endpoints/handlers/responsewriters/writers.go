@@ -34,6 +34,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/httpstream/wsstream"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apiserver/pkg/audit"
 	"k8s.io/apiserver/pkg/endpoints/handlers/negotiation"
@@ -42,7 +43,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/apiserver/pkg/util/flushwriter"
-	"k8s.io/apiserver/pkg/util/wsstream"
 	"k8s.io/component-base/tracing"
 )
 
@@ -98,6 +98,7 @@ func SerializeObject(mediaType string, encoder runtime.Encoder, hw http.Response
 		attribute.String("protocol", req.Proto),
 		attribute.String("mediaType", mediaType),
 		attribute.String("encoder", string(encoder.Identifier())))
+	req = req.WithContext(ctx)
 	defer span.End(5 * time.Second)
 
 	w := &deferredResponseWriter{
@@ -156,6 +157,9 @@ const (
 	// (usually the entire object), and if the size is smaller no gzipping will be performed
 	// if the client requests it.
 	defaultGzipThresholdBytes = 128 * 1024
+	// Use the length of the first write of streaming implementations.
+	// TODO: Update when streaming proto is implemented
+	firstWriteStreamingThresholdBytes = 1
 )
 
 // negotiateContentEncoding returns a supported client-requested content encoding for the
@@ -191,14 +195,53 @@ type deferredResponseWriter struct {
 	statusCode      int
 	contentEncoding string
 
-	hasWritten bool
-	hw         http.ResponseWriter
-	w          io.Writer
+	hasBuffered bool
+	buffer      []byte
+	hasWritten  bool
+	hw          http.ResponseWriter
+	w           io.Writer
 
 	ctx context.Context
 }
 
 func (w *deferredResponseWriter) Write(p []byte) (n int, err error) {
+	switch {
+	case w.hasWritten:
+		// already written, cannot buffer
+		return w.unbufferedWrite(p)
+
+	case w.contentEncoding != "gzip":
+		// non-gzip, no need to buffer
+		return w.unbufferedWrite(p)
+
+	case !w.hasBuffered && len(p) > defaultGzipThresholdBytes:
+		// not yet buffered, first write is long enough to trigger gzip, no need to buffer
+		return w.unbufferedWrite(p)
+
+	case !w.hasBuffered && len(p) > firstWriteStreamingThresholdBytes:
+		// not yet buffered, first write is longer than expected for streaming scenarios that would require buffering, no need to buffer
+		return w.unbufferedWrite(p)
+
+	default:
+		if !w.hasBuffered {
+			w.hasBuffered = true
+			// Start at 80 bytes to avoid rapid reallocation of the buffer.
+			// The minimum size of a 0-item serialized list object is 80 bytes:
+			// {"kind":"List","apiVersion":"v1","metadata":{"resourceVersion":"1"},"items":[]}\n
+			w.buffer = make([]byte, 0, max(80, len(p)))
+		}
+		w.buffer = append(w.buffer, p...)
+		var err error
+		if len(w.buffer) > defaultGzipThresholdBytes {
+			// we've accumulated enough to trigger gzip, write and clear buffer
+			_, err = w.unbufferedWrite(w.buffer)
+			w.buffer = nil
+		}
+		return len(p), err
+	}
+}
+
+func (w *deferredResponseWriter) unbufferedWrite(p []byte) (n int, err error) {
 	ctx := w.ctx
 	span := tracing.SpanFromContext(ctx)
 	// This Step usually wraps in-memory object serialization.
@@ -244,11 +287,17 @@ func (w *deferredResponseWriter) Write(p []byte) (n int, err error) {
 	return w.w.Write(p)
 }
 
-func (w *deferredResponseWriter) Close() error {
+func (w *deferredResponseWriter) Close() (err error) {
 	if !w.hasWritten {
-		return nil
+		if !w.hasBuffered {
+			return nil
+		}
+		// never reached defaultGzipThresholdBytes, no need to do the gzip writer cleanup
+		_, err := w.unbufferedWrite(w.buffer)
+		w.buffer = nil
+		return err
 	}
-	var err error
+
 	switch t := w.w.(type) {
 	case *gzip.Writer:
 		err = t.Close()
@@ -284,7 +333,12 @@ func WriteObjectNegotiated(s runtime.NegotiatedSerializer, restrictions negotiat
 
 	audit.LogResponseObject(req.Context(), object, gv, s)
 
-	encoder := s.EncoderForVersion(serializer.Serializer, gv)
+	var encoder runtime.Encoder
+	if utilfeature.DefaultFeatureGate.Enabled(features.CBORServingAndStorage) {
+		encoder = s.EncoderForVersion(runtime.UseNondeterministicEncoding(serializer.Serializer), gv)
+	} else {
+		encoder = s.EncoderForVersion(serializer.Serializer, gv)
+	}
 	request.TrackSerializeResponseObjectLatency(req.Context(), func() {
 		if listGVKInContentType {
 			SerializeObject(generateMediaTypeWithGVK(serializer.MediaType, mediaType.Convert), encoder, w, req, statusCode, object)

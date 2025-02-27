@@ -8,7 +8,7 @@ import (
 	"flag"
 	"fmt"
 
-	kubeanClusterOperationClientSet "github.com/kubean-io/kubean-api/generated/clusteroperation/clientset/versioned"
+	kubeanclientset "github.com/kubean-io/kubean-api/client/clientset/versioned"
 	"github.com/kubean-io/kubean/pkg/version"
 	clusteropswebhook "github.com/kubean-io/kubean/pkg/webhooks/clusterops"
 
@@ -59,7 +59,7 @@ func Run(ctx context.Context, opt *Options) error {
 	if err != nil {
 		return err
 	}
-	clusterClientOperationSet, err := kubeanClusterOperationClientSet.NewForConfig(resetConfig)
+	kubeanclientset, err := kubeanclientset.NewForConfig(resetConfig)
 	if err != nil {
 		return err
 	}
@@ -70,6 +70,6 @@ func Run(ctx context.Context, opt *Options) error {
 	if err := clusteropswebhook.CreateHTTPSCAFilesFromSecret(CASecret); err != nil {
 		return err
 	}
-	clusteropswebhook.StartWebHookHTTPSServer(clusteropswebhook.PrepareWebHookHTTPSServer(clusterClientOperationSet))
+	clusteropswebhook.StartWebHookHTTPSServer(clusteropswebhook.PrepareWebHookHTTPSServer(kubeanclientset))
 	return fmt.Errorf("admission has exited")
 }

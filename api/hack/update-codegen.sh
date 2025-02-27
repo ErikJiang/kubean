@@ -1,63 +1,70 @@
 #!/usr/bin/env bash
 
+# Copyright 2025 The Kubernetes Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 set -o errexit
 set -o nounset
 set -o pipefail
-set -ex
 
-SubDirName=$1 # kubeancluster
+SCRIPT_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
+# CODEGEN_PKG=${CODEGEN_PKG:-$(cd "${SCRIPT_ROOT}"; ls -d -1 ./vendor/k8s.io/code-generator 2>/dev/null || echo ../code-generator)}
+MODULE_NAME=github.com/kubean-io/kubean-api
+BOILERPLATE=${SCRIPT_ROOT}/hack/boilerplate.go.txt
 
-# For all commands, the working directory is the parent directory(repo root).
+CODEGEN_VERSION="v0.33.0-alpha.3"
+# go get k8s.io/code-generator@${CODEGEN_VERSION}
+go mod download k8s.io/code-generator@${CODEGEN_VERSION}
+CODEGEN_PKG="$(echo `go env GOPATH`/pkg/mod/k8s.io/code-generator@${CODEGEN_VERSION})"
 
-## pwd ## /.../kubean/api
+echo ">>> using codegen: ${CODEGEN_PKG}"
 
-echo "Generating with deepcopy-gen"
-GO111MODULE=on go install k8s.io/code-generator/cmd/deepcopy-gen
-export GOPATH=$(go env GOPATH | awk -F ':' '{print $1}')
-export PATH=$PATH:$GOPATH/bin
+# Source the kube_codegen.sh script
+source "${CODEGEN_PKG}/kube_codegen.sh"
 
-## github.com/kubean-io/kubean-api
+echo "Generating code for ${MODULE_NAME}..."
 
-deepcopy-gen \
-  --go-header-file hack/boilerplate/boilerplate.go.txt \
-  --input-dirs=github.com/kubean-io/kubean-api/apis/$SubDirName/v1alpha1 \
-  --output-package=github.com/kubean-io/kubean-api/apis/$SubDirName/v1alpha1 \
-  --output-file-base=zz_generated.deepcopy
+# Create boilerplate file if it doesn't exist
+touch "${BOILERPLATE}"
 
-echo "Generating with register-gen"
-GO111MODULE=on go install k8s.io/code-generator/cmd/register-gen
-register-gen \
-  --go-header-file hack/boilerplate/boilerplate.go.txt \
-  --input-dirs=github.com/kubean-io/kubean-api/apis/$SubDirName/v1alpha1 \
-  --output-package=github.com/kubean-io/kubean-api/apis/$SubDirName/v1alpha1 \
-  --output-file-base=zz_generated.register
+# 清理现有的生成文件
+rm -f ./apis/cluster/v1alpha1/zz_generated*
+rm -f ./apis/clusteroperation/v1alpha1/zz_generated*
+rm -f ./apis/localartifactset/v1alpha1/zz_generated*
+rm -f ./apis/manifest/v1alpha1/zz_generated*
 
-echo "Generating with client-gen"
-GO111MODULE=on go install k8s.io/code-generator/cmd/client-gen
-client-gen \
-  --go-header-file hack/boilerplate/boilerplate.go.txt \
-  --input-base="" \
-  --input=github.com/kubean-io/kubean-api/apis/$SubDirName/v1alpha1 \
-  --output-package=github.com/kubean-io/kubean-api/generated/$SubDirName/clientset \
-  --clientset-name=versioned
+# Generate helpers (deepcopy, defaulter, etc.)
+GOFLAGS=-mod=mod kube::codegen::gen_helpers \
+  --boilerplate "${BOILERPLATE}" \
+  ./apis
 
-echo "Generating with lister-gen"
-GO111MODULE=on go install k8s.io/code-generator/cmd/lister-gen
-lister-gen \
-  --go-header-file hack/boilerplate/boilerplate.go.txt \
-  --input-dirs=github.com/kubean-io/kubean-api/apis/$SubDirName/v1alpha1 \
-  --output-package=github.com/kubean-io/kubean-api/generated/$SubDirName/listers
+# export KUBE_VERBOSE=9
+# Generate registers
+GOFLAGS=-mod=mod kube::codegen::gen_register \
+  --boilerplate "${BOILERPLATE}" \
+  ./apis
 
-echo "Generating with informer-gen"
-GO111MODULE=on go install k8s.io/code-generator/cmd/informer-gen
-informer-gen \
-  --go-header-file hack/boilerplate/boilerplate.go.txt \
-  --input-dirs=github.com/kubean-io/kubean-api/apis/$SubDirName/v1alpha1 \
-  --versioned-clientset-package=github.com/kubean-io/kubean-api/generated/$SubDirName/clientset/versioned \
-  --listers-package=github.com/kubean-io/kubean-api/generated/$SubDirName/listers \
-  --output-package=github.com/kubean-io/kubean-api/generated/$SubDirName/informers
+# Generate client code
+GOFLAGS=-mod=mod kube::codegen::gen_client \
+  --with-watch \
+  --with-applyconfig \
+  --output-pkg "${MODULE_NAME}/client" \
+  --output-dir ./client \
+  --boilerplate "${BOILERPLATE}" \
+  ./apis
 
-if ls "$GOPATH"/src/github.com | grep -q kubean-io; then
-  cp -r "$GOPATH"/src/github.com/kubean-io/kubean-api/apis/$SubDirName/v1alpha1/*.go apis/$SubDirName/v1alpha1/
-  cp -r "$GOPATH"/src/github.com/kubean-io/kubean-api/generated/$SubDirName generated/$SubDirName
-fi
+# Clean up
+rm -rf "${BOILERPLATE}"
+
+echo "Code generation complete."

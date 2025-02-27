@@ -12,8 +12,11 @@ import (
 
 	clusterv1alpha1 "github.com/kubean-io/kubean-api/apis/cluster/v1alpha1"
 	clusteroperationv1alpha1 "github.com/kubean-io/kubean-api/apis/clusteroperation/v1alpha1"
-	clusterClientSet "github.com/kubean-io/kubean-api/generated/cluster/clientset/versioned"
-	clusterOperationClientSet "github.com/kubean-io/kubean-api/generated/clusteroperation/clientset/versioned"
+
+	kubeanv1alpha1clientset "github.com/kubean-io/kubean-api/client/clientset/versioned"
+  // clusterv1alpha1cs "github.com/kubean-io/kubean-api/client/clientset/versioned/typed/cluster/v1alpha1"
+	// clusteroperationv1alpha1cs "github.com/kubean-io/kubean-api/client/clientset/versioned/typed/clusteroperation/v1alpha1"
+
 	"github.com/kubean-io/kubean/pkg/util"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -32,10 +35,11 @@ const (
 )
 
 type Controller struct {
-	Client              client.Client
-	ClientSet           kubernetes.Interface
-	KubeanClusterSet    clusterClientSet.Interface
-	KubeanClusterOpsSet clusterOperationClientSet.Interface
+	Client          client.Client
+	ClientSet       kubernetes.Interface
+	KubeanClientSet kubeanv1alpha1clientset.Interface
+	// ClusterClientSet clusterv1alpha1cs.ClusterV1alpha1Interface
+	// ClusterOperationClientSet clusteroperationv1alpha1cs.ClusterOperationV1alpha1Interface
 }
 
 func (c *Controller) Start(ctx context.Context) error {
@@ -80,7 +84,8 @@ func CompareClusterConditions(condAList, condBList []clusterv1alpha1.ClusterCond
 
 func (c *Controller) UpdateStatus(cluster *clusterv1alpha1.Cluster) error {
 	listOpt := metav1.ListOptions{LabelSelector: fmt.Sprintf("clusterName=%s", cluster.Name)}
-	clusterOpsList, err := c.KubeanClusterOpsSet.KubeanV1alpha1().ClusterOperations().List(context.Background(), listOpt)
+	clusterOpsList, err := c.KubeanClientSet.ClusterOperationV1alpha1().ClusterOperations().List(context.Background(), listOpt)
+	// clusterOpsList, err := c.ClusterOperationClientSet.ClusterOperations().List(context.Background(), listOpt)
 	if err != nil {
 		return err
 	}
@@ -125,7 +130,8 @@ func (c *Controller) SortClusterOperationsByCreation(operations []clusteroperati
 // CleanExcessClusterOps clean up excess ClusterOperation.
 func (c *Controller) CleanExcessClusterOps(cluster *clusterv1alpha1.Cluster, OpsBackupNum int) (bool, error) {
 	listOpt := metav1.ListOptions{LabelSelector: fmt.Sprintf("clusterName=%s", cluster.Name)}
-	clusterOpsList, err := c.KubeanClusterOpsSet.KubeanV1alpha1().ClusterOperations().List(context.Background(), listOpt)
+	clusterOpsList, err := c.KubeanClientSet.ClusterOperationV1alpha1().ClusterOperations().List(context.Background(), listOpt)
+	// clusterOpsList, err := c.ClusterOperationClientSet.ClusterOperations().List(context.Background(), listOpt)
 	if err != nil {
 		return false, err
 	}
@@ -141,7 +147,8 @@ func (c *Controller) CleanExcessClusterOps(cluster *clusterv1alpha1.Cluster, Ops
 			continue
 		}
 		klog.Warningf("Delete ClusterOperation: name: %s, createTime: %s, status: %s", item.Name, item.CreationTimestamp.String(), item.Status.Status)
-		c.KubeanClusterOpsSet.KubeanV1alpha1().ClusterOperations().Delete(context.Background(), item.Name, metav1.DeleteOptions{})
+		c.KubeanClientSet.ClusterOperationV1alpha1().ClusterOperations().Delete(context.Background(), item.Name, metav1.DeleteOptions{})
+		// c.ClusterOperationClientSet.ClusterOperations().Delete(context.Background(), item.Name, metav1.DeleteOptions{})
 	}
 	return true, nil
 }

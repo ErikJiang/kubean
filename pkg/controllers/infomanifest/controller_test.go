@@ -28,16 +28,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	localartifactsetv1alpha1 "github.com/kubean-io/kubean-api/apis/localartifactset/v1alpha1"
 	manifestv1alpha1 "github.com/kubean-io/kubean-api/apis/manifest/v1alpha1"
+	kubeanclientsetfake "github.com/kubean-io/kubean-api/client/clientset/versioned/fake"
 	"github.com/kubean-io/kubean-api/constants"
-	localartifactsetv1alpha1fake "github.com/kubean-io/kubean-api/generated/localartifactset/clientset/versioned/fake"
-	manifestv1alpha1fake "github.com/kubean-io/kubean-api/generated/manifest/clientset/versioned/fake"
 	"github.com/kubean-io/kubean/pkg/util"
 )
 
@@ -76,9 +75,9 @@ func removeReactorFromTestingTake(obj interface{ RESTClient() rest.Interface }, 
 
 func Test_ParseConfigMapToLocalService(t *testing.T) {
 	controller := &Controller{
-		Client:                newFakeClient(),
-		ClientSet:             clientsetfake.NewSimpleClientset(),
-		InfoManifestClientSet: manifestv1alpha1fake.NewSimpleClientset(),
+		Client:          newFakeClient(),
+		ClientSet:       clientsetfake.NewSimpleClientset(),
+		KubeanClientSet: kubeanclientsetfake.NewSimpleClientset(),
 	}
 	localServiceData := `
       imageRepo: 
@@ -160,9 +159,9 @@ func Test_ParseConfigMapToLocalService(t *testing.T) {
 
 func Test_Test_UpdateLocalAvailableImage2(t *testing.T) {
 	controller := &Controller{
-		Client:                newFakeClient(),
-		ClientSet:             clientsetfake.NewSimpleClientset(),
-		InfoManifestClientSet: manifestv1alpha1fake.NewSimpleClientset(),
+		Client:          newFakeClient(),
+		ClientSet:       clientsetfake.NewSimpleClientset(),
+		KubeanClientSet: kubeanclientsetfake.NewSimpleClientset(),
 	}
 
 	manifestName := "manifest"
@@ -180,7 +179,8 @@ func Test_Test_UpdateLocalAvailableImage2(t *testing.T) {
 		},
 	}
 	controller.Client.Create(context.Background(), manifest)
-	controller.InfoManifestClientSet.KubeanV1alpha1().Manifests().Create(context.Background(), manifest, metav1.CreateOptions{})
+	controller.KubeanClientSet.ManifestV1alpha1().Manifests().Create(context.Background(), manifest, metav1.CreateOptions{})
+	// controller.InfoManifestClientSet.KubeanV1alpha1().Manifests().Create(context.Background(), manifest, metav1.CreateOptions{})
 
 	tests := []struct {
 		name string
@@ -190,11 +190,13 @@ func Test_Test_UpdateLocalAvailableImage2(t *testing.T) {
 		{
 			name: "FetchGlobalInfoManifest with error",
 			args: func() string {
-				fetchTestingFake(controller.InfoManifestClientSet.KubeanV1alpha1()).PrependReactor("get", "manifests", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+				fetchTestingFake(controller.KubeanClientSet.ManifestV1alpha1()).PrependReactor("get", "manifests", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+					// fetchTestingFake(controller.InfoManifestClientSet.KubeanV1alpha1()).PrependReactor("get", "manifests", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 					return true, nil, fmt.Errorf("this is error")
 				})
 				controller.UpdateLocalAvailableImage([]manifestv1alpha1.Manifest{*manifest})
-				removeReactorFromTestingTake(controller.InfoManifestClientSet.KubeanV1alpha1(), "get", "manifests")
+				removeReactorFromTestingTake(controller.KubeanClientSet.ManifestV1alpha1(), "get", "manifests")
+				// removeReactorFromTestingTake(controller.InfoManifestClientSet.KubeanV1alpha1(), "get", "manifests")
 
 				manifest := &manifestv1alpha1.Manifest{}
 				err := controller.Client.Get(context.Background(), types.NamespacedName{Name: manifestName}, manifest)
@@ -208,11 +210,13 @@ func Test_Test_UpdateLocalAvailableImage2(t *testing.T) {
 		{
 			name: "UpdateStatus with error",
 			args: func() string {
-				fetchTestingFake(controller.InfoManifestClientSet.KubeanV1alpha1()).PrependReactor("update", "manifests/status", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+				fetchTestingFake(controller.KubeanClientSet.ManifestV1alpha1()).PrependReactor("update", "manifests/status", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+					// fetchTestingFake(controller.InfoManifestClientSet.KubeanV1alpha1()).PrependReactor("update", "manifests/status", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 					return true, nil, fmt.Errorf("this is error when updateStatus")
 				})
 				controller.UpdateLocalAvailableImage([]manifestv1alpha1.Manifest{*manifest})
-				removeReactorFromTestingTake(controller.InfoManifestClientSet.KubeanV1alpha1(), "update", "manifests/status")
+				removeReactorFromTestingTake(controller.KubeanClientSet.ManifestV1alpha1(), "update", "manifests/status")
+				// removeReactorFromTestingTake(controller.InfoManifestClientSet.KubeanV1alpha1(), "update", "manifests/status")
 				manifest := &manifestv1alpha1.Manifest{}
 				err := controller.Client.Get(context.Background(), types.NamespacedName{Name: manifestName}, manifest)
 				if err != nil {
@@ -235,12 +239,13 @@ func Test_Test_UpdateLocalAvailableImage2(t *testing.T) {
 
 func Test_UpdateLocalAvailableImage(t *testing.T) {
 	controller := &Controller{
-		Client:                newFakeClient(),
-		ClientSet:             clientsetfake.NewSimpleClientset(),
-		InfoManifestClientSet: manifestv1alpha1fake.NewSimpleClientset(),
+		Client:          newFakeClient(),
+		ClientSet:       clientsetfake.NewSimpleClientset(),
+		KubeanClientSet: kubeanclientsetfake.NewSimpleClientset(),
 	}
 	manifestName := "manifest1"
-	manifest, err := controller.InfoManifestClientSet.KubeanV1alpha1().Manifests().Create(context.Background(), &manifestv1alpha1.Manifest{
+	manifest, err := controller.KubeanClientSet.ManifestV1alpha1().Manifests().Create(context.Background(), &manifestv1alpha1.Manifest{
+		// manifest, err := controller.InfoManifestClientSet.KubeanV1alpha1().Manifests().Create(context.Background(), &manifestv1alpha1.Manifest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: manifestName,
 		},
@@ -259,7 +264,7 @@ func Test_UpdateLocalAvailableImage(t *testing.T) {
 				manifest.Spec = manifestv1alpha1.Spec{
 					KubeanVersion: "123",
 				}
-				manifest, _ := controller.InfoManifestClientSet.KubeanV1alpha1().Manifests().Update(context.Background(), manifest, metav1.UpdateOptions{})
+				manifest, _ := controller.KubeanClientSet.ManifestV1alpha1().Manifests().Update(context.Background(), manifest, metav1.UpdateOptions{})
 				os.Setenv("POD_NAMESPACE", "")
 				configMap := &corev1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
@@ -281,7 +286,7 @@ func Test_UpdateLocalAvailableImage(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			test.arg()
-			manifest, err := controller.InfoManifestClientSet.KubeanV1alpha1().Manifests().Get(context.Background(), manifestName, metav1.GetOptions{})
+			manifest, err := controller.KubeanClientSet.ManifestV1alpha1().Manifests().Get(context.Background(), manifestName, metav1.GetOptions{})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -306,16 +311,15 @@ func addLocalArtifactSet(controller *Controller) {
 			},
 		},
 	}
-	controller.LocalArtifactSetClientSet.KubeanV1alpha1().LocalArtifactSets().Create(context.Background(), set, metav1.CreateOptions{})
+	controller.KubeanClientSet.LocalArtifactSetV1alpha1().LocalArtifactSets().Create(context.Background(), set, metav1.CreateOptions{})
 }
 
 func TestIsOnlineENV(t *testing.T) {
 	genController := func() *Controller {
 		return &Controller{
-			Client:                    newFakeClient(),
-			ClientSet:                 clientsetfake.NewSimpleClientset(),
-			InfoManifestClientSet:     manifestv1alpha1fake.NewSimpleClientset(),
-			LocalArtifactSetClientSet: localartifactsetv1alpha1fake.NewSimpleClientset(),
+			Client:          newFakeClient(),
+			ClientSet:       clientsetfake.NewSimpleClientset(),
+			KubeanClientSet: kubeanclientsetfake.NewSimpleClientset(),
 		}
 	}
 	controller := genController()
@@ -329,10 +333,10 @@ func TestIsOnlineENV(t *testing.T) {
 			name: "list but error",
 			args: func() bool {
 				// use plural: localartifactsets
-				fetchTestingFake(controller.LocalArtifactSetClientSet.KubeanV1alpha1()).PrependReactor("list", "localartifactsets", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+				fetchTestingFake(controller.KubeanClientSet.LocalArtifactSetV1alpha1()).PrependReactor("list", "localartifactsets", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 					return true, nil, fmt.Errorf("this is error")
 				})
-				defer removeReactorFromTestingTake(controller.LocalArtifactSetClientSet.KubeanV1alpha1(), "list", "localartifactsets")
+				defer removeReactorFromTestingTake(controller.KubeanClientSet.LocalArtifactSetV1alpha1(), "list", "localartifactsets")
 				return controller.IsOnlineENV()
 			},
 			want: true,
@@ -364,10 +368,9 @@ func TestIsOnlineENV(t *testing.T) {
 
 func TestFetchLocalServiceCM(t *testing.T) {
 	controller := &Controller{
-		Client:                    newFakeClient(),
-		ClientSet:                 clientsetfake.NewSimpleClientset(),
-		InfoManifestClientSet:     manifestv1alpha1fake.NewSimpleClientset(),
-		LocalArtifactSetClientSet: localartifactsetv1alpha1fake.NewSimpleClientset(),
+		Client:          newFakeClient(),
+		ClientSet:       clientsetfake.NewSimpleClientset(),
+		KubeanClientSet: kubeanclientsetfake.NewSimpleClientset(),
 	}
 	controller.FetchLocalServiceCM("")
 	tests := []struct {
@@ -425,10 +428,9 @@ func TestFetchLocalServiceCM(t *testing.T) {
 
 func TestUpdateLocalService(t *testing.T) {
 	controller := &Controller{
-		Client:                    newFakeClient(),
-		ClientSet:                 clientsetfake.NewSimpleClientset(),
-		InfoManifestClientSet:     manifestv1alpha1fake.NewSimpleClientset(),
-		LocalArtifactSetClientSet: localartifactsetv1alpha1fake.NewSimpleClientset(),
+		Client:          newFakeClient(),
+		ClientSet:       clientsetfake.NewSimpleClientset(),
+		KubeanClientSet: kubeanclientsetfake.NewSimpleClientset(),
 	}
 
 	tests := []struct {
@@ -441,7 +443,7 @@ func TestUpdateLocalService(t *testing.T) {
 		{
 			name: "air-gap, but no localservice configmap",
 			prequisites: func() error {
-				_, err := controller.LocalArtifactSetClientSet.KubeanV1alpha1().LocalArtifactSets().Create(context.Background(), &localartifactsetv1alpha1.LocalArtifactSet{
+				_, err := controller.KubeanClientSet.LocalArtifactSetV1alpha1().LocalArtifactSets().Create(context.Background(), &localartifactsetv1alpha1.LocalArtifactSet{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "localartifactset-1",
 					},
@@ -452,7 +454,7 @@ func TestUpdateLocalService(t *testing.T) {
 				return nil
 			},
 			cleaner: func() {
-				controller.LocalArtifactSetClientSet.KubeanV1alpha1().LocalArtifactSets().Delete(context.Background(), "localartifactset-1", metav1.DeleteOptions{})
+				controller.KubeanClientSet.LocalArtifactSetV1alpha1().LocalArtifactSets().Delete(context.Background(), "localartifactset-1", metav1.DeleteOptions{})
 			},
 			args: []manifestv1alpha1.Manifest{
 				{
@@ -466,7 +468,7 @@ func TestUpdateLocalService(t *testing.T) {
 		{
 			name: "air-gap, localservice configmap exists and correct data structure",
 			prequisites: func() error {
-				if _, err := controller.LocalArtifactSetClientSet.KubeanV1alpha1().LocalArtifactSets().Create(context.Background(), &localartifactsetv1alpha1.LocalArtifactSet{
+				if _, err := controller.KubeanClientSet.LocalArtifactSetV1alpha1().LocalArtifactSets().Create(context.Background(), &localartifactsetv1alpha1.LocalArtifactSet{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "localartifactset-2",
 					},
@@ -484,7 +486,7 @@ func TestUpdateLocalService(t *testing.T) {
 				return nil
 			},
 			cleaner: func() {
-				controller.LocalArtifactSetClientSet.KubeanV1alpha1().LocalArtifactSets().Delete(context.Background(), "localartifactset-2", metav1.DeleteOptions{})
+				controller.KubeanClientSet.LocalArtifactSetV1alpha1().LocalArtifactSets().Delete(context.Background(), "localartifactset-2", metav1.DeleteOptions{})
 				controller.ClientSet.CoreV1().ConfigMaps("default").Delete(context.Background(), LocalServiceConfigMap, metav1.DeleteOptions{})
 			},
 			args: []manifestv1alpha1.Manifest{
@@ -499,7 +501,7 @@ func TestUpdateLocalService(t *testing.T) {
 		{
 			name: "air-gap, localservice configmap exists and but incorrect data structure",
 			prequisites: func() error {
-				if _, err := controller.LocalArtifactSetClientSet.KubeanV1alpha1().LocalArtifactSets().Create(context.Background(), &localartifactsetv1alpha1.LocalArtifactSet{
+				if _, err := controller.KubeanClientSet.LocalArtifactSetV1alpha1().LocalArtifactSets().Create(context.Background(), &localartifactsetv1alpha1.LocalArtifactSet{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "localartifactset-3",
 					},
@@ -517,7 +519,7 @@ func TestUpdateLocalService(t *testing.T) {
 				return nil
 			},
 			cleaner: func() {
-				controller.LocalArtifactSetClientSet.KubeanV1alpha1().LocalArtifactSets().Delete(context.Background(), "localartifactset-3", metav1.DeleteOptions{})
+				controller.KubeanClientSet.LocalArtifactSetV1alpha1().LocalArtifactSets().Delete(context.Background(), "localartifactset-3", metav1.DeleteOptions{})
 				controller.ClientSet.CoreV1().ConfigMaps("default").Delete(context.Background(), LocalServiceConfigMap, metav1.DeleteOptions{})
 			},
 			args: []manifestv1alpha1.Manifest{
@@ -858,10 +860,9 @@ func TestOp(t *testing.T) {
 
 func TestReconcile(t *testing.T) {
 	controller := &Controller{
-		Client:                    newFakeClient(),
-		ClientSet:                 clientsetfake.NewSimpleClientset(),
-		InfoManifestClientSet:     manifestv1alpha1fake.NewSimpleClientset(),
-		LocalArtifactSetClientSet: localartifactsetv1alpha1fake.NewSimpleClientset(),
+		Client:          newFakeClient(),
+		ClientSet:       clientsetfake.NewSimpleClientset(),
+		KubeanClientSet: kubeanclientsetfake.NewSimpleClientset(),
 	}
 
 	manifestName := "manifest1"
@@ -903,16 +904,16 @@ func TestReconcile(t *testing.T) {
 			name: "fetch local service cm error in offline env",
 			args: func() bool {
 				controller.Client.Create(context.Background(), manifest)
-				controller.InfoManifestClientSet.KubeanV1alpha1().Manifests().Create(context.Background(), manifest, metav1.CreateOptions{})
-				controller.LocalArtifactSetClientSet.KubeanV1alpha1().LocalArtifactSets().Create(context.Background(), &localartifactsetv1alpha1.LocalArtifactSet{
+				controller.KubeanClientSet.ManifestV1alpha1().Manifests().Create(context.Background(), manifest, metav1.CreateOptions{})
+				controller.KubeanClientSet.LocalArtifactSetV1alpha1().LocalArtifactSets().Create(context.Background(), &localartifactsetv1alpha1.LocalArtifactSet{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "localartifactset-3",
 					},
 				}, metav1.CreateOptions{})
 				defer func() {
 					controller.Client.Delete(context.Background(), manifest)
-					controller.InfoManifestClientSet.KubeanV1alpha1().Manifests().Delete(context.Background(), manifestName, metav1.DeleteOptions{})
-					controller.LocalArtifactSetClientSet.KubeanV1alpha1().LocalArtifactSets().Delete(context.Background(), "localartifactset-3", metav1.DeleteOptions{})
+					controller.KubeanClientSet.ManifestV1alpha1().Manifests().Delete(context.Background(), manifestName, metav1.DeleteOptions{})
+					controller.KubeanClientSet.LocalArtifactSetV1alpha1().LocalArtifactSets().Delete(context.Background(), "localartifactset-3", metav1.DeleteOptions{})
 				}()
 				result, err := controller.Reconcile(context.Background(), controllerruntime.Request{NamespacedName: types.NamespacedName{Name: manifestName}})
 				return err == nil && result.Requeue == false
@@ -923,8 +924,8 @@ func TestReconcile(t *testing.T) {
 			name: "update local service success and requeue",
 			args: func() bool {
 				controller.Client.Create(context.Background(), manifest)
-				controller.InfoManifestClientSet.KubeanV1alpha1().Manifests().Create(context.Background(), manifest, metav1.CreateOptions{})
-				controller.LocalArtifactSetClientSet.KubeanV1alpha1().LocalArtifactSets().Create(context.Background(), &localartifactsetv1alpha1.LocalArtifactSet{
+				controller.KubeanClientSet.ManifestV1alpha1().Manifests().Create(context.Background(), manifest, metav1.CreateOptions{})
+				controller.KubeanClientSet.LocalArtifactSetV1alpha1().LocalArtifactSets().Create(context.Background(), &localartifactsetv1alpha1.LocalArtifactSet{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "localartifactset-2",
 					},
@@ -936,7 +937,7 @@ func TestReconcile(t *testing.T) {
 					Data: map[string]string{"localService": "imageRepoScheme: 'https'"},
 				}, metav1.CreateOptions{})
 				defer func() {
-					controller.LocalArtifactSetClientSet.KubeanV1alpha1().LocalArtifactSets().Delete(context.Background(), "localartifactset-3", metav1.DeleteOptions{})
+					controller.KubeanClientSet.LocalArtifactSetV1alpha1().LocalArtifactSets().Delete(context.Background(), "localartifactset-3", metav1.DeleteOptions{})
 				}()
 				result, err := controller.Reconcile(context.Background(), controllerruntime.Request{NamespacedName: types.NamespacedName{Name: manifestName}})
 				return err == nil && result.RequeueAfter == Loop
@@ -946,11 +947,11 @@ func TestReconcile(t *testing.T) {
 		{
 			name: "update local available image",
 			args: func() bool {
-				controller.InfoManifestClientSet.KubeanV1alpha1().Manifests().Create(context.Background(), manifest, metav1.CreateOptions{})
+				controller.KubeanClientSet.ManifestV1alpha1().Manifests().Create(context.Background(), manifest, metav1.CreateOptions{})
 				manifest.Spec = manifestv1alpha1.Spec{
 					KubeanVersion: "123",
 				}
-				controller.InfoManifestClientSet.KubeanV1alpha1().Manifests().Update(context.Background(), manifest, metav1.UpdateOptions{})
+				controller.KubeanClientSet.ManifestV1alpha1().Manifests().Update(context.Background(), manifest, metav1.UpdateOptions{})
 				result, err := controller.Reconcile(context.Background(), controllerruntime.Request{NamespacedName: types.NamespacedName{Name: manifestName}})
 				return err == nil && result.RequeueAfter == Loop
 			},
@@ -959,7 +960,7 @@ func TestReconcile(t *testing.T) {
 		{
 			name: "list manifests error",
 			args: func() bool {
-				fetchTestingFake(controller.InfoManifestClientSet.KubeanV1alpha1()).PrependReactor("list", "manifests", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+				fetchTestingFake(controller.KubeanClientSet.ManifestV1alpha1()).PrependReactor("list", "manifests", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 					return true, nil, fmt.Errorf("this is error when list manifests")
 				})
 				result, err := controller.Reconcile(context.Background(), controllerruntime.Request{NamespacedName: types.NamespacedName{Name: manifestName}})
@@ -970,7 +971,7 @@ func TestReconcile(t *testing.T) {
 		{
 			name: "list manifests error and isNotFound",
 			args: func() bool {
-				fetchTestingFake(controller.InfoManifestClientSet.KubeanV1alpha1()).PrependReactor("list", "manifests", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+				fetchTestingFake(controller.KubeanClientSet.ManifestV1alpha1()).PrependReactor("list", "manifests", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 					return true, nil, errors.NewNotFound(manifestv1alpha1.Resource("manifests"), "manifest-name")
 				})
 				result, err := controller.Reconcile(context.Background(), controllerruntime.Request{NamespacedName: types.NamespacedName{Name: manifestName}})
@@ -990,10 +991,9 @@ func TestReconcile(t *testing.T) {
 
 func TestStart(t *testing.T) {
 	controller := &Controller{
-		Client:                    newFakeClient(),
-		ClientSet:                 clientsetfake.NewSimpleClientset(),
-		InfoManifestClientSet:     manifestv1alpha1fake.NewSimpleClientset(),
-		LocalArtifactSetClientSet: localartifactsetv1alpha1fake.NewSimpleClientset(),
+		Client:          newFakeClient(),
+		ClientSet:       clientsetfake.NewSimpleClientset(),
+		KubeanClientSet: kubeanclientsetfake.NewSimpleClientset(),
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
@@ -1002,10 +1002,9 @@ func TestStart(t *testing.T) {
 
 func TestSetupWithManager(t *testing.T) {
 	controller := &Controller{
-		Client:                    newFakeClient(),
-		ClientSet:                 clientsetfake.NewSimpleClientset(),
-		InfoManifestClientSet:     manifestv1alpha1fake.NewSimpleClientset(),
-		LocalArtifactSetClientSet: localartifactsetv1alpha1fake.NewSimpleClientset(),
+		Client:          newFakeClient(),
+		ClientSet:       clientsetfake.NewSimpleClientset(),
+		KubeanClientSet: kubeanclientsetfake.NewSimpleClientset(),
 	}
 	if controller.SetupWithManager(MockManager{}) != nil {
 		t.Fatal()
@@ -1061,10 +1060,12 @@ func (MockManager) AddReadyzCheck(name string, check healthz.Checker) error { re
 
 func (MockManager) Start(ctx context.Context) error { return nil }
 
-func (MockManager) GetWebhookServer() *webhook.Server { return nil }
+func (MockManager) GetWebhookServer() webhook.Server { return nil }
 
 func (MockManager) GetLogger() logr.Logger { return logr.Logger{} }
 
-func (MockManager) GetControllerOptions() v1alpha1.ControllerConfigurationSpec {
-	return v1alpha1.ControllerConfigurationSpec{}
-}
+func (MockManager) GetControllerOptions() config.Controller { return config.Controller{} }
+
+func (MockManager) AddMetricsServerExtraHandler(path string, handler http.Handler) error { return nil }
+
+func (MockManager) GetHTTPClient() *http.Client { return &http.Client{} }

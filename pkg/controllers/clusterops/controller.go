@@ -20,9 +20,8 @@ import (
 	clusteroperationv1alpha1 "github.com/kubean-io/kubean-api/apis/clusteroperation/v1alpha1"
 	manifestv1alpha1 "github.com/kubean-io/kubean-api/apis/manifest/v1alpha1"
 	"github.com/kubean-io/kubean-api/constants"
-	clusterClientSet "github.com/kubean-io/kubean-api/generated/cluster/clientset/versioned"
-	clusterOperationClientSet "github.com/kubean-io/kubean-api/generated/clusteroperation/clientset/versioned"
-	manifestClientSet "github.com/kubean-io/kubean-api/generated/manifest/clientset/versioned"
+
+	kubeanclientset "github.com/kubean-io/kubean-api/client/clientset/versioned"
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -48,11 +47,11 @@ const (
 )
 
 type Controller struct {
-	Client                client.Client
-	ClientSet             kubernetes.Interface
-	KubeanClusterSet      clusterClientSet.Interface
-	KubeanClusterOpsSet   clusterOperationClientSet.Interface
-	InfoManifestClientSet manifestClientSet.Interface
+	Client          client.Client
+	ClientSet       kubernetes.Interface
+	KubeanClientSet kubeanclientset.Interface
+	// ClusterClientSet clusterv1alpha1cs.ClusterV1alpha1Interface
+	// ManifestClientSet manifestv1alpha1cs.ManifestV1alpha1Interface
 }
 
 func (c *Controller) Start(ctx context.Context) error {
@@ -119,7 +118,8 @@ func (c *Controller) UpdateStatusHasModified(clusterOps *clusteroperationv1alpha
 }
 
 func (c *Controller) FetchGlobalInfoManifest() (*manifestv1alpha1.Manifest, error) {
-	global, err := c.InfoManifestClientSet.KubeanV1alpha1().Manifests().Get(context.Background(), constants.InfoManifestGlobal, metav1.GetOptions{})
+	global, err := c.KubeanClientSet.ManifestV1alpha1().Manifests().Get(context.Background(), constants.InfoManifestGlobal, metav1.GetOptions{})
+	// global, err := c.ManifestClientSet.Manifests().Get(context.Background(), constants.InfoManifestGlobal, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -532,7 +532,8 @@ func (c *Controller) CreateKubeSprayJob(clusterOps *clusteroperationv1alpha1.Clu
 // GetKuBeanCluster fetch the cluster which clusterOps belongs to.
 func (c *Controller) GetKuBeanCluster(clusterOps *clusteroperationv1alpha1.ClusterOperation) (*clusterv1alpha1.Cluster, error) {
 	// cluster has many clusterOps.
-	return c.KubeanClusterSet.KubeanV1alpha1().Clusters().Get(context.Background(), clusterOps.Spec.Cluster, metav1.GetOptions{})
+	return c.KubeanClientSet.ClusterV1alpha1().Clusters().Get(context.Background(), clusterOps.Spec.Cluster, metav1.GetOptions{})
+	// return c.ClusterClientSet.Clusters().Get(context.Background(), clusterOps.Spec.Cluster, metav1.GetOptions{})
 }
 
 func (c *Controller) TrySuspendPod(clusterOps *clusteroperationv1alpha1.ClusterOperation) (bool, error) {
@@ -660,7 +661,7 @@ func (c *Controller) CreateEntryPointShellConfigMap(clusterOps *clusteroperation
 
 // HookCustomAction inject custom actions to spray job.
 func (c *Controller) HookCustomAction(clusterOps *clusteroperationv1alpha1.ClusterOperation, job *batchv1.Job) error {
-	errMsg := "actionSourceRef must be specified if actionSource set as configmap"
+	const errMsg = "actionSourceRef must be specified if actionSource set as configmap"
 	for _, action := range clusterOps.Spec.PreHook {
 		if action.ActionSource != nil && *action.ActionSource != clusteroperationv1alpha1.BuiltinActionSource {
 			if action.ActionSourceRef.IsEmpty() {

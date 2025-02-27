@@ -27,8 +27,7 @@ import (
 	k8stesting "k8s.io/client-go/testing"
 
 	clusteroperationv1alpha1 "github.com/kubean-io/kubean-api/apis/clusteroperation/v1alpha1"
-	clusteroperationv1alpha1fake "github.com/kubean-io/kubean-api/generated/clusteroperation/clientset/versioned/fake"
-
+	kubeanclientsetfake "github.com/kubean-io/kubean-api/client/clientset/versioned/fake"
 	"github.com/kubean-io/kubean/pkg/util"
 )
 
@@ -355,8 +354,10 @@ func (fw *FakeResponseWriter) Write(bs []byte) (int, error) {
 }
 
 func TestAdmissionReviewHandlerHttp(t *testing.T) {
-	clusterOperationClientSet := clusteroperationv1alpha1fake.NewSimpleClientset()
-	handler := AdmissionReviewHandler{clusterOperationClientSet}
+	kubeanClientSet := kubeanclientsetfake.NewSimpleClientset()
+	handler := AdmissionReviewHandler{KubeanClientSet: kubeanClientSet}
+	// clusterOperationClientSet := clusteroperationv1alpha1fake.NewSimpleClientset()
+	// handler := AdmissionReviewHandler{clusterOperationClientSet}
 	tests := []struct {
 		name string
 		args func() bool
@@ -475,10 +476,11 @@ func TestAdmissionReviewHandlerHttp(t *testing.T) {
 				admissionReview := admissionv1.AdmissionReview{Request: &admissionv1.AdmissionRequest{Object: runtime.RawExtension{Raw: raw}}}
 				admissionReviewBytes, _ := json.Marshal(admissionReview)
 				request, _ := http.NewRequest("", "", bytes.NewReader(admissionReviewBytes))
-				fetchTestingFake(clusterOperationClientSet.KubeanV1alpha1()).PrependReactor("list", "clusteroperations", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+
+				fetchTestingFake(kubeanClientSet.ClusterOperationV1alpha1()).PrependReactor("list", "clusteroperations", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 					return true, nil, fmt.Errorf("list clusteroperations but error")
 				})
-				defer removeReactorFromTestingTake(clusterOperationClientSet.KubeanV1alpha1(), "list", "clusteroperations")
+				defer removeReactorFromTestingTake(kubeanClientSet.ClusterOperationV1alpha1(), "list", "clusteroperations")
 				handler.ServeHTTP(response, request)
 				admissionReviewResponse := &admissionv1.AdmissionReview{}
 				json.Unmarshal([]byte(response.result), admissionReviewResponse)
@@ -502,7 +504,7 @@ func TestAdmissionReviewHandlerHttp(t *testing.T) {
 						Cluster: "abc_cluster",
 					},
 				}
-				clusterOperationClientSet.KubeanV1alpha1().ClusterOperations().Create(context.Background(), clusterOps1, metav1.CreateOptions{})
+				kubeanClientSet.ClusterOperationV1alpha1().ClusterOperations().Create(context.Background(), clusterOps1, metav1.CreateOptions{})
 				clusterOps2 := &clusteroperationv1alpha1.ClusterOperation{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ClusterOperation",

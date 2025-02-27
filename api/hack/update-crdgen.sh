@@ -4,16 +4,18 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-CONTROLLER_GEN_PKG="sigs.k8s.io/controller-tools/cmd/controller-gen"
-CONTROLLER_GEN_VER="v0.6.2"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "${SCRIPT_DIR}")"
+BIN_DIR="${PROJECT_ROOT}/hack/bin"
 
-source hack/util.sh
+CONTROLLER_GEN_PKG=sigs.k8s.io/controller-tools/cmd/controller-gen
+CONTROLLER_GEN_VER=v0.17.2
 
-echo "Generating with controller-gen"
-util::install_tools ${CONTROLLER_GEN_PKG} ${CONTROLLER_GEN_VER} >/dev/null 2>&1
+mkdir -p "${BIN_DIR}"
+GOBIN="${BIN_DIR}" go install "${CONTROLLER_GEN_PKG}"@"${CONTROLLER_GEN_VER}"
 
 # Unify the crds used by helm chart and the installation scripts
-controller-gen crd paths=./apis/... output:crd:dir=./charts/crds
+"${BIN_DIR}/controller-gen" crd paths=./apis/... output:crd:dir=./charts/crds
 
 for f in ./charts/crds/* ; do
   ## f: "./charts/crds/kubean.io_clusteroperations.yaml"
@@ -22,3 +24,7 @@ for f in ./charts/crds/* ; do
 done
 
 cp -r charts/crds ../charts/kubean
+
+rm -rf "${BIN_DIR}"
+
+echo "CRD generation complete."

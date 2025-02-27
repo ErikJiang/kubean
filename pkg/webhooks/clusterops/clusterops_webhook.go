@@ -21,9 +21,8 @@ import (
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 
 	clusteroperationv1alpha1 "github.com/kubean-io/kubean-api/apis/clusteroperation/v1alpha1"
+	kubeanclientset "github.com/kubean-io/kubean-api/client/clientset/versioned"
 	"github.com/kubean-io/kubean-api/constants"
-	clusterOperationClientSet "github.com/kubean-io/kubean-api/generated/clusteroperation/clientset/versioned"
-
 	admissionv1 "k8s.io/api/admission/v1"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -196,7 +195,7 @@ func (p PingHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request
 }
 
 type AdmissionReviewHandler struct {
-	KubeanClusterOpsSet clusterOperationClientSet.Interface
+	KubeanClientSet kubeanclientset.Interface
 }
 
 func (handler AdmissionReviewHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
@@ -235,7 +234,7 @@ func (handler AdmissionReviewHandler) ServeHTTP(writer http.ResponseWriter, requ
 	}
 	selector := labels.NewSelector()
 	selector.Add(*requirement)
-	opsList, err := handler.KubeanClusterOpsSet.KubeanV1alpha1().ClusterOperations().List(context.Background(), metav1.ListOptions{LabelSelector: selector.String()})
+	opsList, err := handler.KubeanClientSet.ClusterOperationV1alpha1().ClusterOperations().List(context.Background(), metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
 		klog.ErrorS(err, "fetch ClusterOperations but failed")
 		writer.WriteHeader(http.StatusBadRequest)
@@ -272,9 +271,9 @@ func (handler AdmissionReviewHandler) ServeHTTP(writer http.ResponseWriter, requ
 	writer.Write(httpResult)
 }
 
-func PrepareWebHookHTTPSServer(KubeanClusterOpsSet clusterOperationClientSet.Interface) *http.Server {
+func PrepareWebHookHTTPSServer(kubeanClientSet kubeanclientset.Interface) *http.Server {
 	mux := http.NewServeMux()
-	mux.Handle(WebHookPath, AdmissionReviewHandler{KubeanClusterOpsSet: KubeanClusterOpsSet})
+	mux.Handle(WebHookPath, AdmissionReviewHandler{KubeanClientSet: kubeanClientSet})
 	mux.Handle("/ping", PingHandler{})
 	server := &http.Server{
 		Addr:    ":10443",

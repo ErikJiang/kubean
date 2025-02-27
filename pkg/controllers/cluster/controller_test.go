@@ -19,7 +19,6 @@ import (
 	"k8s.io/client-go/tools/record"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
-	"sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -30,8 +29,8 @@ import (
 	localartifactsetv1alpha1 "github.com/kubean-io/kubean-api/apis/localartifactset/v1alpha1"
 	manifestv1alpha1 "github.com/kubean-io/kubean-api/apis/manifest/v1alpha1"
 	"github.com/kubean-io/kubean-api/constants"
-	clusterv1alpha1fake "github.com/kubean-io/kubean-api/generated/cluster/clientset/versioned/fake"
-	clusteroperationv1alpha1fake "github.com/kubean-io/kubean-api/generated/clusteroperation/clientset/versioned/fake"
+
+	kubeanclientsetfake "github.com/kubean-io/kubean-api/client/clientset/versioned/fake"
 
 	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,6 +38,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/config"
 )
 
 func fetchTestingFake(obj interface{ RESTClient() rest.Interface }) *k8stesting.Fake {
@@ -175,10 +175,11 @@ func TestCompareClusterConditions(t *testing.T) {
 
 func TestSortClusterOperationsByCreation(t *testing.T) {
 	controller := &Controller{
-		Client:              newFakeClient(),
-		ClientSet:           clientsetfake.NewSimpleClientset(),
-		KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
-		KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
+		Client:          newFakeClient(),
+		ClientSet:       clientsetfake.NewSimpleClientset(),
+		KubeanClientSet: kubeanclientsetfake.NewSimpleClientset(),
+		// ClusterClientSet:    clusterv1alpha1fake.NewSimpleClientset(),
+		// ClusterOperationClientSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 	}
 	tests := []struct {
 		name string
@@ -242,10 +243,11 @@ func TestSortClusterOperationsByCreation(t *testing.T) {
 func Test_CleanExcessClusterOps(t *testing.T) {
 	OpsBackupNum := 5
 	controller := &Controller{
-		Client:              newFakeClient(),
-		ClientSet:           clientsetfake.NewSimpleClientset(),
-		KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
-		KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
+		Client:          newFakeClient(),
+		ClientSet:       clientsetfake.NewSimpleClientset(),
+		KubeanClientSet: kubeanclientsetfake.NewSimpleClientset(),
+		// ClusterClientSet:    clusterv1alpha1fake.NewSimpleClientset(),
+		// ClusterOperationClientSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 	}
 	exampleCluster := &clusterv1alpha1.Cluster{
 		TypeMeta: metav1.TypeMeta{
@@ -288,7 +290,8 @@ func Test_CleanExcessClusterOps(t *testing.T) {
 							CreationTimestamp: metav1.Unix(int64(i), 0),
 						},
 					}
-					controller.KubeanClusterOpsSet.KubeanV1alpha1().ClusterOperations().Create(context.Background(), clusterOperation, metav1.CreateOptions{})
+					controller.KubeanClientSet.ClusterOperationV1alpha1().ClusterOperations().Create(context.Background(), clusterOperation, metav1.CreateOptions{})
+					// controller.KubeanClusterOpsSet.KubeanV1alpha1().ClusterOperations().Create(context.Background(), clusterOperation, metav1.CreateOptions{})
 				}
 				result, _ := controller.CleanExcessClusterOps(exampleCluster, OpsBackupNum)
 				return result
@@ -310,7 +313,8 @@ func Test_CleanExcessClusterOps(t *testing.T) {
 							CreationTimestamp: metav1.Unix(int64(i), 0),
 						},
 					}
-					controller.KubeanClusterOpsSet.KubeanV1alpha1().ClusterOperations().Create(context.Background(), clusterOperation, metav1.CreateOptions{})
+					controller.KubeanClientSet.ClusterOperationV1alpha1().ClusterOperations().Create(context.Background(), clusterOperation, metav1.CreateOptions{})
+					// controller.KubeanClusterOpsSet.KubeanV1alpha1().ClusterOperations().Create(context.Background(), clusterOperation, metav1.CreateOptions{})
 				}
 				clusterOperationRunning := &clusteroperationv1alpha1.ClusterOperation{
 					TypeMeta: metav1.TypeMeta{
@@ -323,11 +327,13 @@ func Test_CleanExcessClusterOps(t *testing.T) {
 						CreationTimestamp: metav1.Unix(int64(10), 0),
 					},
 				}
-				clusterOperationRunning, _ = controller.KubeanClusterOpsSet.KubeanV1alpha1().ClusterOperations().Create(context.Background(), clusterOperationRunning, metav1.CreateOptions{})
+				clusterOperationRunning, _ = controller.KubeanClientSet.ClusterOperationV1alpha1().ClusterOperations().Create(context.Background(), clusterOperationRunning, metav1.CreateOptions{})
+				// clusterOperationRunning, _ = controller.KubeanClusterOpsSet.KubeanV1alpha1().ClusterOperations().Create(context.Background(), clusterOperationRunning, metav1.CreateOptions{})
 				clusterOperationRunning.Status = clusteroperationv1alpha1.Status{
 					Status: clusteroperationv1alpha1.RunningStatus,
 				}
-				controller.KubeanClusterOpsSet.KubeanV1alpha1().ClusterOperations().UpdateStatus(context.Background(), clusterOperationRunning, metav1.UpdateOptions{})
+				controller.KubeanClientSet.ClusterOperationV1alpha1().ClusterOperations().UpdateStatus(context.Background(), clusterOperationRunning, metav1.UpdateOptions{})
+				// controller.KubeanClusterOpsSet.KubeanV1alpha1().ClusterOperations().UpdateStatus(context.Background(), clusterOperationRunning, metav1.UpdateOptions{})
 				result, _ := controller.CleanExcessClusterOps(exampleCluster, OpsBackupNum)
 				return result
 			},
@@ -336,11 +342,13 @@ func Test_CleanExcessClusterOps(t *testing.T) {
 		{
 			name: "get error",
 			args: func() bool {
-				fetchTestingFake(controller.KubeanClusterOpsSet.KubeanV1alpha1()).PrependReactor("list", "clusteroperations", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+				fetchTestingFake(controller.KubeanClientSet.ClusterOperationV1alpha1()).PrependReactor("list", "clusteroperations", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+					// fetchTestingFake(controller.KubeanClusterOpsSet.KubeanV1alpha1()).PrependReactor("list", "clusteroperations", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 					return true, nil, fmt.Errorf("this is error")
 				})
 				_, err := controller.CleanExcessClusterOps(exampleCluster, 5)
-				removeReactorFromTestingTake(controller.KubeanClusterOpsSet.KubeanV1alpha1(), "list", "clusteroperations")
+				removeReactorFromTestingTake(controller.KubeanClientSet.ClusterOperationV1alpha1(), "list", "clusteroperations")
+				// removeReactorFromTestingTake(controller.KubeanClusterOpsSet.KubeanV1alpha1(), "list", "clusteroperations")
 				return err != nil && err.Error() == "this is error"
 			},
 			want: true,
@@ -357,10 +365,11 @@ func Test_CleanExcessClusterOps(t *testing.T) {
 
 func Test_UpdateStatus(t *testing.T) {
 	controller := &Controller{
-		Client:              newFakeClient(),
-		ClientSet:           clientsetfake.NewSimpleClientset(),
-		KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
-		KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
+		Client:          newFakeClient(),
+		ClientSet:       clientsetfake.NewSimpleClientset(),
+		KubeanClientSet: kubeanclientsetfake.NewSimpleClientset(),
+		// ClusterClientSet:    clusterv1alpha1fake.NewSimpleClientset(),
+		// ClusterOperationClientSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 	}
 	tests := []struct {
 		name string
@@ -415,8 +424,10 @@ func Test_UpdateStatus(t *testing.T) {
 				}
 				controller.Client.Create(context.Background(), clusterOps)
 				controller.Client.Create(context.Background(), exampleCluster)
-				controller.KubeanClusterSet.KubeanV1alpha1().Clusters().Create(context.Background(), exampleCluster, metav1.CreateOptions{})
-				controller.KubeanClusterOpsSet.KubeanV1alpha1().ClusterOperations().Create(context.Background(), clusterOps, metav1.CreateOptions{})
+				controller.KubeanClientSet.ClusterV1alpha1().Clusters().Create(context.Background(), exampleCluster, metav1.CreateOptions{})
+				// controller.KubeanClusterSet.KubeanV1alpha1().Clusters().Create(context.Background(), exampleCluster, metav1.CreateOptions{})
+				controller.KubeanClientSet.ClusterOperationV1alpha1().ClusterOperations().Create(context.Background(), clusterOps, metav1.CreateOptions{})
+				// controller.KubeanClusterOpsSet.KubeanV1alpha1().ClusterOperations().Create(context.Background(), clusterOps, metav1.CreateOptions{})
 				return controller.UpdateStatus(exampleCluster) == nil
 			},
 			want: true,
@@ -437,11 +448,13 @@ func Test_UpdateStatus(t *testing.T) {
 						VarsConfRef:  &apis.ConfigMapRef{NameSpace: "kubean-system", Name: "vars-a"},
 					},
 				}
-				fetchTestingFake(controller.KubeanClusterOpsSet.KubeanV1alpha1()).PrependReactor("list", "clusteroperations", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+				fetchTestingFake(controller.KubeanClientSet.ClusterOperationV1alpha1()).PrependReactor("list", "clusteroperations", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+					// fetchTestingFake(controller.KubeanClusterOpsSet.KubeanV1alpha1()).PrependReactor("list", "clusteroperations", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 					return true, nil, fmt.Errorf("this is error")
 				})
 				err := controller.UpdateStatus(exampleCluster)
-				removeReactorFromTestingTake(controller.KubeanClusterOpsSet.KubeanV1alpha1(), "list", "clusteroperations")
+				removeReactorFromTestingTake(controller.KubeanClientSet.ClusterOperationV1alpha1(), "list", "clusteroperations")
+				// removeReactorFromTestingTake(controller.KubeanClusterOpsSet.KubeanV1alpha1(), "list", "clusteroperations")
 				return err != nil && err.Error() == "this is error"
 			},
 			want: true,
@@ -471,10 +484,11 @@ func newFakeClient() client.Client {
 func TestReconcile(t *testing.T) {
 	genController := func() *Controller {
 		return &Controller{
-			Client:              newFakeClient(),
-			ClientSet:           clientsetfake.NewSimpleClientset(),
-			KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
-			KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
+			Client:          newFakeClient(),
+			ClientSet:       clientsetfake.NewSimpleClientset(),
+			KubeanClientSet: kubeanclientsetfake.NewSimpleClientset(),
+			// ClusterClientSet:          clusterv1alpha1fake.NewSimpleClientset(),
+			// ClusterOperationClientSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 		}
 	}
 	tests := []struct {
@@ -520,8 +534,10 @@ func TestReconcile(t *testing.T) {
 				}
 				controller.Client.Create(context.Background(), clusterOps)
 				controller.Client.Create(context.Background(), exampleCluster)
-				controller.KubeanClusterSet.KubeanV1alpha1().Clusters().Create(context.Background(), exampleCluster, metav1.CreateOptions{})
-				controller.KubeanClusterOpsSet.KubeanV1alpha1().ClusterOperations().Create(context.Background(), clusterOps, metav1.CreateOptions{})
+				controller.KubeanClientSet.ClusterV1alpha1().Clusters().Create(context.Background(), exampleCluster, metav1.CreateOptions{})
+				// controller.KubeanClusterSet.KubeanV1alpha1().Clusters().Create(context.Background(), exampleCluster, metav1.CreateOptions{})
+				controller.KubeanClientSet.ClusterOperationV1alpha1().ClusterOperations().Create(context.Background(), clusterOps, metav1.CreateOptions{})
+				// controller.KubeanClusterOpsSet.KubeanV1alpha1().ClusterOperations().Create(context.Background(), clusterOps, metav1.CreateOptions{})
 				result, _ := controller.Reconcile(context.Background(), controllerruntime.Request{NamespacedName: types.NamespacedName{Name: "cluster1"}})
 				return result.RequeueAfter > 0
 			},
@@ -556,13 +572,17 @@ func TestReconcile(t *testing.T) {
 				}
 				controller.Client.Create(context.Background(), clusterOps)
 				controller.Client.Create(context.Background(), exampleCluster)
-				controller.KubeanClusterSet.KubeanV1alpha1().Clusters().Create(context.Background(), exampleCluster, metav1.CreateOptions{})
-				controller.KubeanClusterOpsSet.KubeanV1alpha1().ClusterOperations().Create(context.Background(), clusterOps, metav1.CreateOptions{})
-				fetchTestingFake(controller.KubeanClusterOpsSet.KubeanV1alpha1()).PrependReactor("list", "clusteroperations", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+				controller.KubeanClientSet.ClusterV1alpha1().Clusters().Create(context.Background(), exampleCluster, metav1.CreateOptions{})
+				// controller.KubeanClusterSet.KubeanV1alpha1().Clusters().Create(context.Background(), exampleCluster, metav1.CreateOptions{})
+				controller.KubeanClientSet.ClusterOperationV1alpha1().ClusterOperations().Create(context.Background(), clusterOps, metav1.CreateOptions{})
+				// controller.KubeanClusterOpsSet.KubeanV1alpha1().ClusterOperations().Create(context.Background(), clusterOps, metav1.CreateOptions{})
+				fetchTestingFake(controller.KubeanClientSet.ClusterOperationV1alpha1()).PrependReactor("list", "clusteroperations", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+					// fetchTestingFake(controller.KubeanClusterOpsSet.KubeanV1alpha1()).PrependReactor("list", "clusteroperations", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 					return true, nil, fmt.Errorf("this is error")
 				})
 				result, _ := controller.Reconcile(context.Background(), controllerruntime.Request{NamespacedName: types.NamespacedName{Name: "cluster1"}})
-				removeReactorFromTestingTake(controller.KubeanClusterOpsSet.KubeanV1alpha1(), "list", "clusteroperations")
+				removeReactorFromTestingTake(controller.KubeanClientSet.ClusterOperationV1alpha1(), "list", "clusteroperations")
+				// removeReactorFromTestingTake(controller.KubeanClusterOpsSet.KubeanV1alpha1(), "list", "clusteroperations")
 				return result.RequeueAfter > 0
 			},
 			needRequeue: true,
@@ -596,8 +616,10 @@ func TestReconcile(t *testing.T) {
 				}
 				controller.Client.Create(context.Background(), clusterOps)
 				controller.Client.Create(context.Background(), exampleCluster)
-				controller.KubeanClusterSet.KubeanV1alpha1().Clusters().Create(context.Background(), exampleCluster, metav1.CreateOptions{})
-				controller.KubeanClusterOpsSet.KubeanV1alpha1().ClusterOperations().Create(context.Background(), clusterOps, metav1.CreateOptions{})
+				controller.KubeanClientSet.ClusterV1alpha1().Clusters().Create(context.Background(), exampleCluster, metav1.CreateOptions{})
+				// controller.KubeanClusterSet.KubeanV1alpha1().Clusters().Create(context.Background(), exampleCluster, metav1.CreateOptions{})
+				controller.KubeanClientSet.ClusterOperationV1alpha1().ClusterOperations().Create(context.Background(), clusterOps, metav1.CreateOptions{})
+				// controller.KubeanClusterOpsSet.KubeanV1alpha1().ClusterOperations().Create(context.Background(), clusterOps, metav1.CreateOptions{})
 				for i := 0; i < 100; i++ {
 					clusterOperation := &clusteroperationv1alpha1.ClusterOperation{
 						TypeMeta: metav1.TypeMeta{
@@ -610,7 +632,8 @@ func TestReconcile(t *testing.T) {
 							CreationTimestamp: metav1.Unix(int64(i), 0),
 						},
 					}
-					controller.KubeanClusterOpsSet.KubeanV1alpha1().ClusterOperations().Create(context.Background(), clusterOperation, metav1.CreateOptions{})
+					controller.KubeanClientSet.ClusterOperationV1alpha1().ClusterOperations().Create(context.Background(), clusterOperation, metav1.CreateOptions{})
+					// controller.KubeanClusterOpsSet.KubeanV1alpha1().ClusterOperations().Create(context.Background(), clusterOperation, metav1.CreateOptions{})
 				}
 				result, _ := controller.Reconcile(context.Background(), controllerruntime.Request{NamespacedName: types.NamespacedName{Name: "cluster1"}})
 				return result.RequeueAfter > 0
@@ -629,10 +652,11 @@ func TestReconcile(t *testing.T) {
 
 func TestStart(t *testing.T) {
 	controller := &Controller{
-		Client:              newFakeClient(),
-		ClientSet:           clientsetfake.NewSimpleClientset(),
-		KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
-		KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
+		Client:          newFakeClient(),
+		ClientSet:       clientsetfake.NewSimpleClientset(),
+		KubeanClientSet: kubeanclientsetfake.NewSimpleClientset(),
+		// ClusterClientSet:          clusterv1alpha1fake.NewSimpleClientset(),
+		// ClusterOperationClientSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
@@ -641,10 +665,11 @@ func TestStart(t *testing.T) {
 
 func TestSetupWithManager(t *testing.T) {
 	controller := &Controller{
-		Client:              newFakeClient(),
-		ClientSet:           clientsetfake.NewSimpleClientset(),
-		KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
-		KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
+		Client:          newFakeClient(),
+		ClientSet:       clientsetfake.NewSimpleClientset(),
+		KubeanClientSet: kubeanclientsetfake.NewSimpleClientset(),
+		// ClusterClientSet:          clusterv1alpha1fake.NewSimpleClientset(),
+		// ClusterOperationClientSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 	}
 	if controller.SetupWithManager(MockManager{}) != nil {
 		t.Fatal()
@@ -700,10 +725,12 @@ func (MockManager) AddReadyzCheck(name string, check healthz.Checker) error { re
 
 func (MockManager) Start(ctx context.Context) error { return nil }
 
-func (MockManager) GetWebhookServer() *webhook.Server { return nil }
+func (MockManager) GetWebhookServer() webhook.Server { return nil }
 
 func (MockManager) GetLogger() logr.Logger { return logr.Logger{} }
 
-func (MockManager) GetControllerOptions() v1alpha1.ControllerConfigurationSpec {
-	return v1alpha1.ControllerConfigurationSpec{}
-}
+func (MockManager) GetControllerOptions() config.Controller { return config.Controller{} }
+
+func (MockManager) AddMetricsServerExtraHandler(path string, handler http.Handler) error { return nil }
+
+func (MockManager) GetHTTPClient() *http.Client { return &http.Client{} }

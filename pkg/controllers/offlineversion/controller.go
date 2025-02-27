@@ -10,11 +10,9 @@ import (
 
 	localartifactsetv1alpha1 "github.com/kubean-io/kubean-api/apis/localartifactset/v1alpha1"
 	manifestv1alpha1 "github.com/kubean-io/kubean-api/apis/manifest/v1alpha1"
+	kubeanclientset "github.com/kubean-io/kubean-api/client/clientset/versioned"
 	"github.com/kubean-io/kubean-api/constants"
-	localartifactsetClientSet "github.com/kubean-io/kubean-api/generated/localartifactset/clientset/versioned"
-	manifestClientSet "github.com/kubean-io/kubean-api/generated/manifest/clientset/versioned"
 	"github.com/kubean-io/kubean/pkg/controllers/infomanifest"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -27,10 +25,9 @@ import (
 const Loop = time.Second * 15
 
 type Controller struct {
-	Client                    client.Client
-	ClientSet                 kubernetes.Interface
-	InfoManifestClientSet     manifestClientSet.Interface
-	LocalArtifactSetClientSet localartifactsetClientSet.Interface
+	Client          client.Client
+	ClientSet       kubernetes.Interface
+	KubeanClientSet kubeanclientset.Interface
 }
 
 func (c *Controller) Start(ctx context.Context) error {
@@ -57,7 +54,7 @@ func (c *Controller) MergeManifestsStatus(localartifactset *localartifactsetv1al
 			continue
 		}
 		klog.Infof("Update manifest status for %s since %s", manifest.Name, localartifactset.Name)
-		if _, err := c.InfoManifestClientSet.KubeanV1alpha1().Manifests().UpdateStatus(context.Background(), manifest, metav1.UpdateOptions{}); err != nil {
+		if _, err := c.KubeanClientSet.ManifestV1alpha1().Manifests().UpdateStatus(context.Background(), manifest, metav1.UpdateOptions{}); err != nil {
 			return nil, fmt.Errorf("failed to merge status for manifest %s, %v", manifest.Name, err)
 		}
 	}
@@ -85,7 +82,7 @@ func (c *Controller) Reconcile(ctx context.Context, req controllerruntime.Reques
 		} else {
 			localartifactset.ObjectMeta.Labels = map[string]string{constants.KeySprayRelease: sprayRelease}
 		}
-		_, err := c.LocalArtifactSetClientSet.KubeanV1alpha1().LocalArtifactSets().Update(context.Background(), localartifactset, metav1.UpdateOptions{})
+		_, err := c.KubeanClientSet.LocalArtifactSetV1alpha1().LocalArtifactSets().Update(context.Background(), localartifactset, metav1.UpdateOptions{})
 		if err != nil {
 			klog.Error(err)
 			return controllerruntime.Result{RequeueAfter: Loop}, nil

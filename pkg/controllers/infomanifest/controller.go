@@ -14,8 +14,8 @@ import (
 
 	manifestv1alpha1 "github.com/kubean-io/kubean-api/apis/manifest/v1alpha1"
 	"github.com/kubean-io/kubean-api/constants"
-	localartifactsetClientSet "github.com/kubean-io/kubean-api/generated/localartifactset/clientset/versioned"
-	manifestClientSet "github.com/kubean-io/kubean-api/generated/manifest/clientset/versioned"
+
+	kubeanclientset "github.com/kubean-io/kubean-api/client/clientset/versioned"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -35,10 +35,9 @@ const LocalServiceConfigMap = "kubean-localservice"
 var versionedManifest *VersionedManifest
 
 type Controller struct {
-	Client                    client.Client
-	InfoManifestClientSet     manifestClientSet.Interface
-	ClientSet                 kubernetes.Interface
-	LocalArtifactSetClientSet localartifactsetClientSet.Interface
+	Client          client.Client
+	ClientSet       kubernetes.Interface
+	KubeanClientSet kubeanclientset.Interface
 }
 
 type VersionedManifest struct {
@@ -178,7 +177,8 @@ func (c *Controller) UpdateLocalService(manifests []manifestv1alpha1.Manifest) b
 		if !reflect.DeepEqual(&manifest.Spec.LocalService, localService) {
 			manifest.Spec.LocalService = *localService
 			klog.Infof("Update local-service for %s", manifest.Name)
-			_, err = c.InfoManifestClientSet.KubeanV1alpha1().Manifests().Update(context.Background(), &manifest, metav1.UpdateOptions{})
+			_, err = c.KubeanClientSet.ManifestV1alpha1().Manifests().Update(context.Background(), &manifest, metav1.UpdateOptions{})
+			// _, err = c.ManifestClientSet.Manifests().Update(context.Background(), &manifest, metav1.UpdateOptions{})
 			if err != nil {
 				klog.Warningf("ignoring error: %s", err.Error())
 			}
@@ -205,7 +205,8 @@ func (c *Controller) UpdateLocalAvailableImage(manifests []manifestv1alpha1.Mani
 		}
 		if manifest.Status.LocalAvailable.KubesprayImage != newImageName {
 			manifest.Status.LocalAvailable.KubesprayImage = newImageName
-			_, err := c.InfoManifestClientSet.KubeanV1alpha1().Manifests().UpdateStatus(context.Background(), &manifest, metav1.UpdateOptions{})
+			_, err := c.KubeanClientSet.ManifestV1alpha1().Manifests().UpdateStatus(context.Background(), &manifest, metav1.UpdateOptions{})
+			// _, err := c.ManifestClientSet.Manifests().UpdateStatus(context.Background(), &manifest, metav1.UpdateOptions{})
 			if err != nil {
 				klog.Warningf("ignoring error: %s", err.Error())
 				return
@@ -216,7 +217,8 @@ func (c *Controller) UpdateLocalAvailableImage(manifests []manifestv1alpha1.Mani
 
 // IsOnlineENV indicates what the running env is onLine or air-gap.
 func (c *Controller) IsOnlineENV() bool {
-	result, err := c.LocalArtifactSetClientSet.KubeanV1alpha1().LocalArtifactSets().List(context.Background(), metav1.ListOptions{})
+	result, err := c.KubeanClientSet.LocalArtifactSetV1alpha1().LocalArtifactSets().List(context.Background(), metav1.ListOptions{})
+	// result, err := c.LocalArtifactSetClientSet.LocalArtifactSets().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		klog.Errorf("%s ", err.Error())
 		return true
@@ -228,7 +230,8 @@ func (c *Controller) IsOnlineENV() bool {
 }
 
 func (c *Controller) Reconcile(ctx context.Context, req controllerruntime.Request) (controllerruntime.Result, error) {
-	manifestItems, err := c.InfoManifestClientSet.KubeanV1alpha1().Manifests().List(ctx, metav1.ListOptions{})
+	manifestItems, err := c.KubeanClientSet.ManifestV1alpha1().Manifests().List(ctx, metav1.ListOptions{})
+	// manifestItems, err := c.ManifestClientSet.Manifests().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return controllerruntime.Result{}, nil

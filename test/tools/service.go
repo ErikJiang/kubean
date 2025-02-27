@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	kubeanClusterClientSet "github.com/kubean-io/kubean-api/generated/cluster/clientset/versioned"
+	kubeanclientset "github.com/kubean-io/kubean-api/client/clientset/versioned"
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
@@ -56,10 +56,10 @@ func WaitKubeanJobPodToSuccess(kubeClient *kubernetes.Clientset, podNamespace, p
 }
 
 func SaveKubeConf(kindConfig *restclient.Config, clusterName, configToSavePath string) {
-	clusterClientSet, err := kubeanClusterClientSet.NewForConfig(kindConfig)
+	kubeanClientSet, err := kubeanclientset.NewForConfig(kindConfig)
 	gomega.ExpectWithOffset(2, err).NotTo(gomega.HaveOccurred(), "failed new client set")
 
-	cluster1, err := clusterClientSet.KubeanV1alpha1().Clusters().Get(context.Background(), clusterName, metav1.GetOptions{})
+	cluster1, err := kubeanClientSet.ClusterV1alpha1().Clusters().Get(context.Background(), clusterName, metav1.GetOptions{})
 	gomega.ExpectWithOffset(2, err).NotTo(gomega.HaveOccurred(), "failed to get KuBeanCluster")
 	klog.Info("****get cluster success")
 	fmt.Println("Name:", cluster1.Spec.KubeConfRef.Name, "NameSpace:", cluster1.Spec.KubeConfRef.NameSpace)
@@ -67,7 +67,7 @@ func SaveKubeConf(kindConfig *restclient.Config, clusterName, configToSavePath s
 	// get kubeconfig from configmap and save to local path
 	kubeClient, err := kubernetes.NewForConfig(kindConfig)
 	cluster1CF, err := kubeClient.CoreV1().ConfigMaps(cluster1.Spec.KubeConfRef.NameSpace).Get(context.Background(), cluster1.Spec.KubeConfRef.Name, metav1.GetOptions{})
-	err1 := os.WriteFile(configToSavePath, []byte(cluster1CF.Data["config"]), 0666)
+	err1 := os.WriteFile(configToSavePath, []byte(cluster1CF.Data["config"]), 0o666)
 	gomega.ExpectWithOffset(2, err1).NotTo(gomega.HaveOccurred(), "failed to write localKubeConfigPath")
 }
 
@@ -78,7 +78,7 @@ func WaitPodSInKubeSystemBeRunning(kubeClient *kubernetes.Clientset, timeTotalSe
 		timeInterval = ops[0]
 	}
 
-	//gomega.ExpectWithOffset(2, err).NotTo(gomega.HaveOccurred(), "Failed to get kube-system pods")
+	// gomega.ExpectWithOffset(2, err).NotTo(gomega.HaveOccurred(), "Failed to get kube-system pods")
 	// get cluster pod list, and retry if failed
 	var podList *corev1.PodList
 	var err error
@@ -94,7 +94,7 @@ func WaitPodSInKubeSystemBeRunning(kubeClient *kubernetes.Clientset, timeTotalSe
 	for _, podItem := range podList.Items {
 		klog.Info("Waiting ", podItem.Name, "to be Running...")
 		gomega.Eventually(func() bool {
-			//gomega.ExpectWithOffset(2, err1).NotTo(gomega.HaveOccurred(), "Failed get pod", pod.Name)
+			// gomega.ExpectWithOffset(2, err1).NotTo(gomega.HaveOccurred(), "Failed get pod", pod.Name)
 			// get cluster pod name, and retry if failed
 			var pod *corev1.Pod
 			var err1 error
@@ -112,7 +112,7 @@ func WaitPodSInKubeSystemBeRunning(kubeClient *kubernetes.Clientset, timeTotalSe
 				return true
 			} else {
 				klog.Info("    Status is: ", podStatus)
-				//gomega.Expect(podStatus != PodStatusFailed).To(gomega.BeTrue())
+				// gomega.Expect(podStatus != PodStatusFailed).To(gomega.BeTrue())
 			}
 			return false
 		}, timeTotalSecond*time.Second, timeInterval*time.Second).Should(gomega.BeTrue())
@@ -126,6 +126,7 @@ func GenerateClusterClient(localKubeConfigPath string) *kubernetes.Clientset {
 	gomega.ExpectWithOffset(2, err).NotTo(gomega.HaveOccurred(), "Failed new cluster1Client")
 	return cluster1Client
 }
+
 func WaitPodBeRunning(kubeClient *kubernetes.Clientset, namespace, podName string, timeTotalSecond time.Duration, ops ...time.Duration) *corev1.Pod {
 	klog.Info("---- Waiting Pods in [%s] to be Running ---", namespace)
 	var timeInterval time.Duration = 10
@@ -235,8 +236,10 @@ func SvcCurl(curIP string, curPort int32, checkString string, timeTotalSecond ti
 }
 
 func DoSonoBuoyCheckByPasswd(password, masterSSH string) {
-	subCmd := []string{masterSSH, "sonobuoy", "run", "--sonobuoy-image", "docker.m.daocloud.io/sonobuoy/sonobuoy:v0.56.7", "--plugin-env", "e2e.E2E_FOCUS=pods",
-		"--plugin-env", "e2e.E2E_DRYRUN=true", "--wait"}
+	subCmd := []string{
+		masterSSH, "sonobuoy", "run", "--sonobuoy-image", "docker.m.daocloud.io/sonobuoy/sonobuoy:v0.56.7", "--plugin-env", "e2e.E2E_FOCUS=pods",
+		"--plugin-env", "e2e.E2E_DRYRUN=true", "--wait",
+	}
 	klog.Info("sonobuoy check cmd: ", subCmd)
 	cmd := RemoteSSHCmdArrayByPasswd(password, subCmd)
 	out, _ := NewDoCmd("sshpass", cmd...)
@@ -254,7 +257,7 @@ func DoSonoBuoyCheckByPasswd(password, masterSSH string) {
 func CreatePod(podName, namespace, nodeName, image, kubeconfigFile string) {
 	overrideStr := fmt.Sprintf(`{"spec":{"nodeName":"%s"}}`, nodeName)
 	klog.Info("...overrideStr is: ", overrideStr)
-	//overrideStr := '{"spec":{"nodeName":"node1"}}'
+	// overrideStr := '{"spec":{"nodeName":"node1"}}'
 	createCmd := exec.Command("kubectl", "run", podName, "-n", namespace, "--image", image, "--overrides", overrideStr, "--kubeconfig", kubeconfigFile)
 	createCmdOut, err1 := DoErrCmd(*createCmd)
 	fmt.Println("create nginx1: ", createCmdOut.String(), err1.String())
@@ -297,7 +300,6 @@ func ExposeServiceToDaemonset(serviceName, serviceNamespace, svcType, sourceSele
 }
 
 func CreateDaemonSet(daemonsetName, namespace, imageName string, client *kubernetes.Clientset) *appsv1.DaemonSet {
-
 	daemonSetsBody := &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -367,5 +369,4 @@ func OperateClusterByYaml(clusterInstallYamlsPath, operatorName string, kindConf
 
 	jobPodName := pods.Items[0].Name
 	WaitKubeanJobPodToSuccess(kindClient, kubeanNsName, jobPodName, PodStatusSucceeded)
-
 }

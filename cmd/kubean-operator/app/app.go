@@ -10,17 +10,13 @@ import (
 	"strconv"
 
 	manifestv1alpha1 "github.com/kubean-io/kubean-api/apis/manifest/v1alpha1"
-	kubeanClusterClientSet "github.com/kubean-io/kubean-api/generated/cluster/clientset/versioned"
-	kubeanClusterOperationClientSet "github.com/kubean-io/kubean-api/generated/clusteroperation/clientset/versioned"
-	kubeanLocalArtifactSetClientSet "github.com/kubean-io/kubean-api/generated/localartifactset/clientset/versioned"
-	kubeaninfomanifestClientSet "github.com/kubean-io/kubean-api/generated/manifest/clientset/versioned"
+	kubeanClientSet "github.com/kubean-io/kubean-api/client/clientset/versioned"
 	"github.com/kubean-io/kubean/pkg/controllers/cluster"
 	"github.com/kubean-io/kubean/pkg/controllers/clusterops"
 	"github.com/kubean-io/kubean/pkg/controllers/infomanifest"
 	"github.com/kubean-io/kubean/pkg/controllers/offlineversion"
 	"github.com/kubean-io/kubean/pkg/util"
 	"github.com/kubean-io/kubean/pkg/version"
-
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/kubernetes"
 	rest "k8s.io/client-go/rest"
@@ -78,7 +74,7 @@ func StartManager(ctx context.Context, opt *Options) error {
 		LeaderElectionResourceLock: opt.LeaderElection.ResourceLock,
 		HealthProbeBindAddress:     net.JoinHostPort(opt.BindAddress, strconv.Itoa(opt.SecurePort)),
 		LivenessEndpointName:       "/healthz",
-		Namespace:                  util.GetCurrentNSOrDefault(),
+		// Namespace:                  util.GetCurrentNSOrDefault(),
 	})
 	if err != nil {
 		klog.Errorf("Failed to build controllerManager ,%s", err)
@@ -112,27 +108,38 @@ func setupManager(mgr controllerruntime.Manager, opt *Options, stopChan <-chan s
 	if err != nil {
 		return err
 	}
-	clusterClientSet, err := kubeanClusterClientSet.NewForConfig(resetConfig)
+
+	kubeanClientSet, err := kubeanClientSet.NewForConfig(resetConfig)
 	if err != nil {
 		return err
 	}
-	clusterClientOperationSet, err := kubeanClusterOperationClientSet.NewForConfig(resetConfig)
-	if err != nil {
-		return err
-	}
-	infomanifestClientSet, err := kubeaninfomanifestClientSet.NewForConfig(resetConfig)
-	if err != nil {
-		return err
-	}
-	localArtifactSetClientSet, err := kubeanLocalArtifactSetClientSet.NewForConfig(resetConfig)
-	if err != nil {
-		return err
-	}
+
+	// clusterClientSet, err := kubeanClusterClientSet.NewForConfig(resetConfig)
+	// clusterClientSet, err := clusterClientSet.NewForConfig(resetConfig)
+	// if err != nil {
+	// 	return err
+	// }
+	// clusterClientOperationSet, err := kubeanClusterOperationClientSet.NewForConfig(resetConfig)
+	// clusterClientOperationSet, err := clusterOperationClientSet.NewForConfig(resetConfig)
+	// if err != nil {
+	// 	return err
+	// }
+	// infomanifestClientSet, err := kubeaninfomanifestClientSet.NewForConfig(resetConfig)
+	// infomanifestClientSet, err := infomanifestClientSet.NewForConfig(resetConfig)
+	// if err != nil {
+	// 	return err
+	// }
+	// localArtifactSetClientSet, err := kubeanLocalArtifactSetClientSet.NewForConfig(resetConfig)
+	// localArtifactSetClientSet, err := localArtifactSetClientSet.NewForConfig(resetConfig)
+	// if err != nil {
+	// 	return err
+	// }
 	clusterController := &cluster.Controller{
-		Client:              mgr.GetClient(),
-		ClientSet:           ClientSet,
-		KubeanClusterSet:    clusterClientSet,
-		KubeanClusterOpsSet: clusterClientOperationSet,
+		Client:          mgr.GetClient(),
+		ClientSet:       ClientSet,
+		KubeanClientSet: kubeanClientSet,
+		// ClusterClientSet:          clusterClientSet,
+		// ClusterOperationClientSet: clusterClientOperationSet,
 	}
 	// the message type
 	if err := clusterController.SetupWithManager(mgr); err != nil {
@@ -140,11 +147,11 @@ func setupManager(mgr controllerruntime.Manager, opt *Options, stopChan <-chan s
 		return err
 	}
 	clusterOpsController := &clusterops.Controller{
-		Client:                mgr.GetClient(),
-		ClientSet:             ClientSet,
-		KubeanClusterSet:      clusterClientSet,
-		KubeanClusterOpsSet:   clusterClientOperationSet,
-		InfoManifestClientSet: infomanifestClientSet,
+		Client:          mgr.GetClient(),
+		ClientSet:       ClientSet,
+		KubeanClientSet: kubeanClientSet,
+		// ClusterClientSet:  clusterClientSet,
+		// ManifestClientSet: infomanifestClientSet,
 	}
 	if err := clusterOpsController.SetupWithManager(mgr); err != nil {
 		klog.Errorf("ControllerManager ClusterOps but %s", err)
@@ -152,10 +159,9 @@ func setupManager(mgr controllerruntime.Manager, opt *Options, stopChan <-chan s
 	}
 
 	offlineVersionController := &offlineversion.Controller{
-		Client:                    mgr.GetClient(),
-		ClientSet:                 ClientSet,
-		InfoManifestClientSet:     infomanifestClientSet,
-		LocalArtifactSetClientSet: localArtifactSetClientSet,
+		Client:          mgr.GetClient(),
+		ClientSet:       ClientSet,
+		KubeanClientSet: kubeanClientSet,
 	}
 	if err := offlineVersionController.SetupWithManager(mgr); err != nil {
 		klog.Errorf("ControllerManager OfflineVersion but %s", err)
@@ -163,10 +169,9 @@ func setupManager(mgr controllerruntime.Manager, opt *Options, stopChan <-chan s
 	}
 
 	infomanifestController := &infomanifest.Controller{
-		Client:                    mgr.GetClient(),
-		InfoManifestClientSet:     infomanifestClientSet,
-		ClientSet:                 ClientSet,
-		LocalArtifactSetClientSet: localArtifactSetClientSet,
+		Client:          mgr.GetClient(),
+		ClientSet:       ClientSet,
+		KubeanClientSet: kubeanClientSet,
 	}
 	manifestInfomer, err := mgr.GetCache().GetInformer(context.Background(), &manifestv1alpha1.Manifest{})
 	if err != nil {
