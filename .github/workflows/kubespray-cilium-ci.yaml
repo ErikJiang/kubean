@@ -1,0 +1,70 @@
+name: Kubespray-Cilium E2E Test
+
+on:
+  push:
+
+jobs:
+  kubespray-cilium-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Kubespray
+        run: |
+          git clone https://github.com/kubernetes-sigs/kubespray.git
+          python -m venv kubespray-venv
+          source kubespray-venv/bin/activate
+          cd kubespray
+          pip install -r requirements.txt
+
+      - name: Configure inventory
+        run: |
+          cd kubespray/
+          cp -rfp inventory/sample inventory/mycluster
+
+          cat > inventory/mycluster/inventory.ini << EOF
+          [all]
+          localhost ansible_connection=local
+          
+          [kube_control_plane]
+          localhost
+          
+          [etcd]
+          localhost
+          
+          [kube_node]
+          localhost
+          
+          [k8s_cluster:children]
+          kube_control_plane
+          kube_node
+          EOF
+
+          sed -i 's/^kube_network_plugin:.*$/kube_network_plugin: cni/' inventory/mycluster/group_vars/k8s_cluster/k8s-cluster.yml
+          sed -i 's/^kube_owner:.*$/kube_owner: root/' inventory/mycluster/group_vars/k8s_cluster/k8s-cluster.yml
+
+      - name: Deploy Kubernetes cluster
+        run: |
+          source kubespray-venv/bin/activate
+          cd kubespray/
+          ansible-playbook -i inventory/mycluster/inventory.ini cluster.yml -b -v
+
+          sudo kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=300s
+          sudo kubectl get nodes -o wide
+          sudo kubectl get pods --all-namespaces -o wide
+          sudo kubectl get --raw='/readyz?verbose'
+
+      - name: Install Cilium
+        run: |
+          curl -L --remote-name https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
+          tar xzvf cilium-linux-amd64.tar.gz
+          sudo mv cilium /usr/local/bin/
+          sudo cilium install
+          sudo cilium status --wait
+
+      - name: Validate Cilium installation
+        run: |
+          sudo cilium connectivity test
