@@ -15,7 +15,7 @@ Source: https://github.com/cncf/artwork/tree/master/projects/kubernetes/certifie
 
   <p>
 
-Kubean is a production-ready cluster lifecycle management toolchain based on [kubespray](https://github.com/kubernetes-sigs/kubespray) and other cluster LCM engine.
+Kubean is a production-ready Kubernetes cluster lifecycle management toolchain, based on [kubespray](https://github.com/kubernetes-sigs/kubespray).
 
   </p>
 
@@ -24,15 +24,9 @@ Kubean is a production-ready cluster lifecycle management toolchain based on [ku
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/6263/badge)](https://bestpractices.coreinfrastructure.org/projects/6263)
 [![kubean coverage](https://raw.githubusercontent.com/dasu23/e2ecoverage/master/badges/kubean/kubeanCoverage.svg)](https://github.com/kubean-io/kubean/blob/main/docs/overrides/test/kubean_testcase.md)
 [![license](https://img.shields.io/badge/license-AL%202.0-blue)](https://github.com/kubean-io/kubean/blob/main/LICENSE)
-
-</div>
-
-## :medal_sports: Badges
-
-<div align="center">
 [![Go Report Card](https://goreportcard.com/badge/github.com/kubean-io/kubean)](https://goreportcard.com/report/github.com/kubean-io/kubean)
-<br/>
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkubean-io%2Fkubean.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkubean-io%2Fkubean?ref=badge_shield)
+
 </div>
 
 ---
@@ -47,40 +41,39 @@ Kubean is a production-ready cluster lifecycle management toolchain based on [ku
 
 ## :anchor: Awesome features
 
-- **Simplicity:** Deploying of Kubean and powerful lifecycle management of kubernetes cluster implementing by declarative API.
-- **Offline Supported:** Offline packages(os-pkgs, images, binarys) are released with the release. You won't have to worry about how to gather all the resources you need.
-- **Compatibility:** Multi-arch delivery Supporting. Such as AMD, ARM with common Linux distributions. Also include Kunpeng with Kylin.
-- **Expandability:** Allowing custom actions be added to cluster without any changes for Kubespray.
+- ✨ **Simplicity:** Easily deploy Kubean and manage Kubernetes cluster lifecycles with a powerful declarative API.
+- 📦 **Offline Support:** Includes all OS packages, images, and binaries for offline deployment, eliminating resource gathering concerns.
+- 🌐 **Compatibility:** Supports multi-arch delivery, including AMD and ARM on common Linux distributions, plus Kunpeng with Kylin.
+- 🧩 **Expandability:** Add custom actions to clusters without modifying core Kubespray components.
 
 ## :surfing_man: Quick start
 
-### Killercoda tutorials
+### :school: Killercoda tutorials
 
-We created a [scenario](https://killercoda.com/kubean) on [killercoda](https://killercoda.com), which is an online platform for interactive technique learning. You can try it in there.
+Try our interactive [Killercoda scenario](https://killercoda.com/kubean) for a hands-on learning experience.
 
-### Local install
+### :computer: Local install
 
-1. Ensure that you have a Kubernetes cluster running, on which Helm is installed
+1. Requires an active Kubernetes cluster with Helm installed.
 
-2. Deploy kubean-operator
+2. Deploy Kubean Operator:
 
    ```shell
    helm repo add kubean-io https://kubean-io.github.io/kubean-helm-chart/
    helm install kubean kubean-io/kubean --create-namespace -n kubean-system
    ```
 
-   Then check kubean-operator status by running:
+   Check the operator status:
 
    ```shell
    kubectl get pods -n kubean-system
    ```
 
-3. Online deploy an all-in-one cluster with minimal configuration
+3. Online deploy an All-In-One cluster with minimal configuration:
 
-   1. A simple way is to use [AllInOne.yml](./examples/install/1.minimal/),
-      replacing `<IP1>`, `<USERNAME>`, and other strings with actual values.
+   1. Use [AllInOne.yml](./examples/install/1.minimal/), replacing placeholders like `<IP1>` and `<USERNAME>` with your values.
 
-   2. Start `kubeanClusterOps` to run the kubespray job.
+   2. Start `kubeanClusterOps` to run the Kubespray job.
 
       ```shell
       kubectl apply -f examples/install/1.minimal
@@ -109,22 +102,22 @@ We created a [scenario](https://killercoda.com/kubean) on [killercoda](https://k
 | Kubernetes 1.21    |       ✓       |       ✓       |       ✓       |       ✓       |       ✓       |
 | Kubernetes 1.20    |       ✓       |       ✓       |       ✓       |       ✓       |       ✓       |
 
-To check the list of Kubernetes versions supported by Kubean, refer to the [Kubernetes versions list](./docs/zh/usage/support_k8s_version.md).
+For a detailed list of Kubernetes versions supported by Kubean, see the [Kubernetes versions list](./docs/zh/usage/support_k8s_version.md).
 
 ## :book: Roadmap
 
-For detailed information about all the planned features, refer to the [roadmap](docs/en/develop/roadmap.md).
+View all planned features in our [roadmap](docs/en/develop/roadmap.md).
 
 ## :book: Documents
 
-Please visit our website: [kubean-io.github.io/kubean/](https://kubean-io.github.io/kubean/)
+Visit our documentation website: [kubean-io.github.io/kubean/](https://kubean-io.github.io/kubean/)
 
 ## :envelope: Join us
 
-You can connect with us on the following channels:
+Connect with us on the following channels:
 
-- Slack: join the [#Kubean](https://cloud-native.slack.com/messages/kubean) channel on CNCF Slack by requesting an [invitation](https://slack.cncf.io/) from CNCF Slack. Once you have access to CNCF Slack, you can join the Kubean channel.
-- Email: refer to the [MAINTAINERS.md](./MAINTAINERS.md) to find the email addresses of all maintainers. Feel free to contact them via email to report any issues or ask questions.
+- Slack: Join the [#Kubean](https://cloud-native.slack.com/messages/kubean) channel on CNCF Slack (request an [invitation](https://slack.cncf.io/) if needed).
+- Email: Find maintainer contacts in [MAINTAINERS.md](./MAINTAINERS.md) for reporting issues or asking questions.
 
 ## :thumbsup: Contributors
 
@@ -136,13 +129,15 @@ You can connect with us on the following channels:
 
 ## :mag_right: Others
 
+<div align="center">
+
 Copyright The Kubean Authors
 
-<div align="center">
 We are a [Cloud Native Computing Foundation sandbox project](https://www.cncf.io/).
-</div>
 
 The Linux Foundation® (TLF) has registered trademarks and uses trademarks. For a list of TLF trademarks, see [Trademark Usage](https://www.linuxfoundation.org/legal/trademark-usage).
+
+</div>
 
 ---
 
