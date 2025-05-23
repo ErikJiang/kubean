@@ -88,10 +88,10 @@ markdown_extensions:
 
 extra:
   alternate:
-  - link: /en/
+  - link: /kubean/en/
     name: en - English
     lang: en
-  - link: /zh/
+  - link: /kubean/zh/
     name: zh - 中文
     lang: zh
   generator: false
