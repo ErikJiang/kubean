@@ -19,14 +19,20 @@ Kubean is a production-ready cluster lifecycle management toolchain based on [ku
 
   </p>
 
-  <p>
 [![main workflow](https://github.com/kubean-io/kubean/actions/workflows/auto-main-ci.yaml/badge.svg)](https://github.com/kubean-io/kubean/actions/workflows/auto-main-ci.yaml)
 [![codecov](https://codecov.io/gh/kubean-io/kubean/branch/main/graph/badge.svg?token=8FX807D3QQ)](https://codecov.io/gh/kubean-io/kubean)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/6263/badge)](https://bestpractices.coreinfrastructure.org/projects/6263)
 [![kubean coverage](https://raw.githubusercontent.com/dasu23/e2ecoverage/master/badges/kubean/kubeanCoverage.svg)](https://github.com/kubean-io/kubean/blob/main/docs/overrides/test/kubean_testcase.md)
 [![license](https://img.shields.io/badge/license-AL%202.0-blue)](https://github.com/kubean-io/kubean/blob/main/LICENSE)
-  </p>
 
+</div>
+
+## :medal_sports: Badges
+
+<div align="center">
+[![Go Report Card](https://goreportcard.com/badge/github.com/kubean-io/kubean)](https://goreportcard.com/report/github.com/kubean-io/kubean)
+<br/>
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkubean-io%2Fkubean.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkubean-io%2Fkubean?ref=badge_shield)
 </div>
 
 ---
@@ -35,7 +41,9 @@ Kubean is a production-ready cluster lifecycle management toolchain based on [ku
 <img src="https://github.com/cncf/artwork/blob/main/other/illustrations/ashley-mcnamara/transparent/cncf-cloud-gophers-transparent.png" style="width:700px;" />
 </div>
 
+<div align="center">
 **Kubean is a [Cloud Native Computing Foundation sandbox project](https://cncf.io/).**
+</div>
 
 ## :anchor: Awesome features
 
@@ -85,7 +93,7 @@ We created a [scenario](https://killercoda.com/kubean) on [killercoda](https://k
       ```
 
 <div align="center">
-[![quick_start_image](docs/overrides/assets/images/quick_start.gif)](https://asciinema.org/a/jFTUi2IdU5yydv88kHkPYMni0)
+<a href="https://asciinema.org/a/jFTUi2IdU5yydv88kHkPYMni0"><img src="docs/overrides/assets/images/quick_start.gif" alt="quick_start_image"></a>
 </div>
 
 ## :ocean: Kubernetes compatibility
@@ -111,18 +119,6 @@ For detailed information about all the planned features, refer to the [roadmap](
 
 Please visit our website: [kubean-io.github.io/kubean/](https://kubean-io.github.io/kubean/)
 
-## :medal_sports: Badges
-
-<div align="center">
-<a href="https://trackgit.com">
-<img src="https://us-central1-trackgit-analytics.cloudfunctions.net/token/ping/la6t1t81jgv27ys97ila" alt="trackgit-views" />
-</a>
-<br/>
-[![Go Report Card](https://goreportcard.com/badge/github.com/kubean-io/kubean)](https://goreportcard.com/report/github.com/kubean-io/kubean)
-<br/>
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkubean-io%2Fkubean.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkubean-io%2Fkubean?ref=badge_shield)
-</div>
-
 ## :envelope: Join us
 
 You can connect with us on the following channels:
@@ -142,7 +138,9 @@ You can connect with us on the following channels:
 
 Copyright The Kubean Authors
 
+<div align="center">
 We are a [Cloud Native Computing Foundation sandbox project](https://www.cncf.io/).
+</div>
 
 The Linux Foundation® (TLF) has registered trademarks and uses trademarks. For a list of TLF trademarks, see [Trademark Usage](https://www.linuxfoundation.org/legal/trademark-usage).
 
