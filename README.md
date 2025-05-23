@@ -1,9 +1,5 @@
 # :seedling: Kubean
 
-<a href="https://trackgit.com">
-<img src="https://us-central1-trackgit-analytics.cloudfunctions.net/token/ping/la6t1t81jgv27ys97ila" alt="trackgit-views" />
-</a>
-
 > [简体中文](./README_zh.md)
 
 <div align="center">
@@ -15,7 +11,6 @@
 <!--
 Source: https://github.com/cncf/artwork/tree/master/projects/kubernetes/certified-kubernetes
 -->
-
   </p>
 
   <p>
@@ -25,35 +20,29 @@ Kubean is a production-ready cluster lifecycle management toolchain based on [ku
   </p>
 
   <p>
-
 [![main workflow](https://github.com/kubean-io/kubean/actions/workflows/auto-main-ci.yaml/badge.svg)](https://github.com/kubean-io/kubean/actions/workflows/auto-main-ci.yaml)
 [![codecov](https://codecov.io/gh/kubean-io/kubean/branch/main/graph/badge.svg?token=8FX807D3QQ)](https://codecov.io/gh/kubean-io/kubean)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/6263/badge)](https://bestpractices.coreinfrastructure.org/projects/6263)
 [![kubean coverage](https://raw.githubusercontent.com/dasu23/e2ecoverage/master/badges/kubean/kubeanCoverage.svg)](https://github.com/kubean-io/kubean/blob/main/docs/overrides/test/kubean_testcase.md)
-[![kubean coverage](https://raw.githubusercontent.com/dasu23/e2ecoverage/master/badges/kubean/kubeanCoverage2.svg)](https://github.com/kubean-io/kubean/blob/main/docs/overrides/test/kubean_testcase.md)
 [![license](https://img.shields.io/badge/license-AL%202.0-blue)](https://github.com/kubean-io/kubean/blob/main/LICENSE)
-[![Go Report Card](https://goreportcard.com/badge/github.com/kubean-io/kubean)](https://goreportcard.com/report/github.com/kubean-io/kubean)
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkubean-io%2Fkubean.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkubean-io%2Fkubean?ref=badge_shield)
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkubean-io%2Fkubean.svg?type=small)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkubean-io%2Fkubean?ref=badge_large)
-
   </p>
 
 </div>
 
 ---
 
-<p>
+<div align="center">
 <img src="https://github.com/cncf/artwork/blob/main/other/illustrations/ashley-mcnamara/transparent/cncf-cloud-gophers-transparent.png" style="width:700px;" />
-</p>
+</div>
 
 **Kubean is a [Cloud Native Computing Foundation sandbox project](https://cncf.io/).**
 
 ## :anchor: Awesome features
 
 - **Simplicity:** Deploying of Kubean and powerful lifecycle management of kubernetes cluster implementing by declarative API.
-- **Offline Supported**: Offline packages(os-pkgs, images, binarys) are released with the release. You won't have to worry about how to gather all the resources you need.
-- **Compatibility**: Multi-arch delivery Supporting. Such as AMD, ARM with common Linux distributions. Also include Kunpeng with Kylin.
-- **Expandability**: Allowing custom actions be added to cluster without any changes for Kubespray.
+- **Offline Supported:** Offline packages(os-pkgs, images, binarys) are released with the release. You won't have to worry about how to gather all the resources you need.
+- **Compatibility:** Multi-arch delivery Supporting. Such as AMD, ARM with common Linux distributions. Also include Kunpeng with Kylin.
+- **Expandability:** Allowing custom actions be added to cluster without any changes for Kubespray.
 
 ## :surfing_man: Quick start
 
@@ -95,17 +84,22 @@ We created a [scenario](https://killercoda.com/kubean) on [killercoda](https://k
       kubectl get job -n kubean-system
       ```
 
+<div align="center">
 [![quick_start_image](docs/overrides/assets/images/quick_start.gif)](https://asciinema.org/a/jFTUi2IdU5yydv88kHkPYMni0)
+</div>
 
 ## :ocean: Kubernetes compatibility
 
-|               | Kubernetes 1.27 | Kubernetes 1.26 | Kubernetes 1.25 | Kubernetes 1.24 | Kubernetes 1.23 | Kubernetes 1.22 | Kubernetes 1.21 | Kubernetes 1.20 |
-|---------------|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|:---------------:|
-| Kubean v0.7.4 |        ✓        |        ✓        |        ✓        |        ✓        |        ✓        |        ✓        |        ✓        |        ✓        |
-| Kubean v0.6.6 |        ✓        |        ✓        |        ✓        |        ✓        |        ✓        |        ✓        |        ✓        |        ✓        |
-| Kubean v0.5.4 |        ✓        |        ✓        |        ✓        |        ✓        |        ✓        |        ✓        |        ✓        |        ✓        |
-| Kubean v0.4.5 |        ✓        |        ✓        |        ✓        |        ✓        |        ✓        |        ✓        |        ✓        |        ✓        |
-| Kubean v0.4.4 |        ✓        |        ✓        |        ✓        |        ✓        |        ✓        |        ✓        |        ✓        |        ✓        |
+| Kubernetes Version | Kubean v0.7.4 | Kubean v0.6.6 | Kubean v0.5.4 | Kubean v0.4.5 | Kubean v0.4.4 |
+|:------------------:|:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|
+| Kubernetes 1.27    |       ✓       |       ✓       |       ✓       |       ✓       |       ✓       |
+| Kubernetes 1.26    |       ✓       |       ✓       |       ✓       |       ✓       |       ✓       |
+| Kubernetes 1.25    |       ✓       |       ✓       |       ✓       |       ✓       |       ✓       |
+| Kubernetes 1.24    |       ✓       |       ✓       |       ✓       |       ✓       |       ✓       |
+| Kubernetes 1.23    |       ✓       |       ✓       |       ✓       |       ✓       |       ✓       |
+| Kubernetes 1.22    |       ✓       |       ✓       |       ✓       |       ✓       |       ✓       |
+| Kubernetes 1.21    |       ✓       |       ✓       |       ✓       |       ✓       |       ✓       |
+| Kubernetes 1.20    |       ✓       |       ✓       |       ✓       |       ✓       |       ✓       |
 
 To check the list of Kubernetes versions supported by Kubean, refer to the [Kubernetes versions list](./docs/zh/usage/support_k8s_version.md).
 
@@ -117,6 +111,18 @@ For detailed information about all the planned features, refer to the [roadmap](
 
 Please visit our website: [kubean-io.github.io/kubean/](https://kubean-io.github.io/kubean/)
 
+## :medal_sports: Badges
+
+<div align="center">
+<a href="https://trackgit.com">
+<img src="https://us-central1-trackgit-analytics.cloudfunctions.net/token/ping/la6t1t81jgv27ys97ila" alt="trackgit-views" />
+</a>
+<br/>
+[![Go Report Card](https://goreportcard.com/badge/github.com/kubean-io/kubean)](https://goreportcard.com/report/github.com/kubean-io/kubean)
+<br/>
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkubean-io%2Fkubean.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkubean-io%2Fkubean?ref=badge_shield)
+</div>
+
 ## :envelope: Join us
 
 You can connect with us on the following channels:
@@ -126,9 +132,11 @@ You can connect with us on the following channels:
 
 ## :thumbsup: Contributors
 
+<div align="center">
 <a href="https://github.com/kubean-io/kubean/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=kubean-io/kubean" />
 </a>
+</div>
 
 ## :mag_right: Others
 
