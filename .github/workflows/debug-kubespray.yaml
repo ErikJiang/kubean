@@ -12,6 +12,7 @@ on:
   push:
     branches:
       - 'testing'
+      - 'test_dual_stack'
 
 jobs:
   echo-inputs:
@@ -86,6 +87,8 @@ jobs:
           unsafe_show_logs: true
           kube_version: "${{ inputs.KUBE_VERSION || env.KUBE_VERSION }}"
           container_manager: docker
+          docker_package_info:
+            pkgs: []
           kube_proxy_mode: iptables
           enable_nodelocaldns: false
           etcd_deployment_type: kubeadm
@@ -100,7 +103,7 @@ jobs:
           source kubespray-venv/bin/activate
           cd kubespray/
           ansible-playbook -i inventory/mycluster/inventory.ini cluster.yml -b -v \
-            -e '{"container_manager":"docker","docker_package_info":{"pkgs":[]}}'
+           -e '{"container_manager": "docker", "docker_package_info": {"pkgs": []}}'
 
           mkdir -p $HOME/.kube
           sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
@@ -114,3 +117,125 @@ jobs:
 
           echo "Checking kubeadm-config.yaml for certificate renewal..."
           sudo kubeadm certs check-expiration
+
+      - name: Check IPv4 network support (after initial deployment)
+        run: |
+          echo "============= IPv4 Network Support Check (After Initial Deployment) ============="
+          
+          echo "1. Checking cluster IP ranges..."
+          kubectl cluster-info dump | grep -E "(service-cluster-ip-range|cluster-cidr)" || true
+          
+          echo "2. Checking node IP addresses..."
+          kubectl get nodes -o wide
+          
+          echo "3. Checking service network..."
+          kubectl get svc -A -o wide
+          
+          echo "4. Checking pod network..."
+          kubectl get pods -A -o wide | head -10
+          
+          echo "5. Testing IPv4 connectivity..."
+          kubectl run test-ipv4 --image=busybox --rm -it --restart=Never -- ping -c 3 8.8.8.8 || true
+          
+          echo "6. Checking CNI configuration..."
+          sudo ls -la /etc/cni/net.d/ || true
+          sudo cat /etc/cni/net.d/* | head -20 || true
+          
+          echo "7. Checking if IPv6 is currently supported..."
+          kubectl get nodes -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}' | grep -E ":" && echo "IPv6 addresses found" || echo "No IPv6 addresses found"
+
+      - name: Configure IPv6 dual-stack
+        run: |
+          cd kubespray/
+          
+          echo "Adding IPv6 dual-stack configuration to k8s-cluster.yml..."
+          cat << EOF >> inventory/mycluster/group_vars/k8s_cluster/k8s-cluster.yml
+          ipv6_stack: true
+          calico_cni_pool_ipv6: true
+          EOF
+          
+          echo "Updated k8s-cluster.yml content:"
+          cat inventory/mycluster/group_vars/k8s_cluster/k8s-cluster.yml
+
+      - name: Apply IPv6 dual-stack configuration
+        run: |
+          source kubespray-venv/bin/activate
+          cd kubespray/
+          
+          echo "Re-running ansible playbook to apply IPv6 dual-stack configuration..."
+          ansible-playbook -i inventory/mycluster/inventory.ini cluster.yml -b -v \
+           -e '{"container_manager": "docker", "docker_package_info": {"pkgs": []}}'
+          
+          echo "Waiting for pods to be ready after IPv6 configuration..."
+          kubectl wait --for=condition=Ready pods --all -n kube-system --timeout=300s
+          
+          echo "IPv6 dual-stack configuration applied successfully."
+          
+          echo "Verifying cluster status..."
+          kubectl get nodes -o wide
+          kubectl get pods -n kube-system
+
+      - name: Check IPv4/IPv6 dual-stack network support (after IPv6 configuration)
+        run: |
+          echo "============= IPv4/IPv6 Dual-Stack Network Support Check (After IPv6 Configuration) ============="
+          
+          echo "1. Checking cluster IP ranges (should include both IPv4 and IPv6)..."
+          kubectl cluster-info dump | grep -E "(service-cluster-ip-range|cluster-cidr)" || true
+          
+          echo "2. Checking node IP addresses (should include both IPv4 and IPv6)..."
+          kubectl get nodes -o wide
+          kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}: {.status.addresses[*].address}{"\n"}{end}'
+          
+          echo "3. Checking service network (should support dual-stack)..."
+          kubectl get svc -A -o wide
+          
+          echo "4. Creating test service to verify dual-stack support..."
+          cat << EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: test-dual-stack-svc
+            namespace: default
+          spec:
+            type: ClusterIP
+            ipFamilyPolicy: PreferDualStack
+            ipFamilies:
+            - IPv4
+            - IPv6
+            ports:
+            - port: 80
+              targetPort: 80
+            selector:
+              app: test
+          EOF
+          
+          echo "5. Checking if dual-stack service was created successfully..."
+          kubectl get svc test-dual-stack-svc -o yaml | grep -A 10 -B 5 -E "(clusterIPs|ipFamilies)" || true
+          
+          echo "6. Testing IPv4 connectivity..."
+          kubectl run test-ipv4-post --image=busybox --rm -it --restart=Never -- ping -c 3 8.8.8.8 || true
+          
+          echo "7. Testing IPv6 connectivity..."
+          kubectl run test-ipv6-post --image=busybox --rm -it --restart=Never -- ping6 -c 3 2001:4860:4860::8888 || true
+          
+          echo "8. Checking CNI configuration after IPv6 setup..."
+          sudo ls -la /etc/cni/net.d/ || true
+          sudo cat /etc/cni/net.d/* | grep -E "(ipv6|IPv6|dual)" || true
+          
+          echo "9. Checking Calico configuration for IPv6..."
+          kubectl get ippools.crd.projectcalico.org -o yaml | grep -A 5 -B 5 -E "(ipv6|IPv6)" || true
+          
+          echo "10. Checking pod network ranges..."
+          kubectl get pods -A -o wide | head -10
+          
+          echo "11. Verifying IPv6 stack is enabled..."
+          kubectl get nodes -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}' | grep -E ":" && echo "✅ IPv6 addresses found" || echo "❌ No IPv6 addresses found"
+          
+          echo "12. Checking cluster network configuration summary..."
+          echo "IPv4 addresses on nodes:"
+          kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}: {.status.addresses[?(@.type=="InternalIP")].address}{"\n"}{end}' | grep -v ":"
+          echo "IPv6 addresses on nodes:"
+          kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}: {.status.addresses[?(@.type=="InternalIP")].address}{"\n"}{end}' | grep ":" || echo "No IPv6 addresses found"
+          
+          echo "13. Final cleanup..."
+          kubectl delete svc test-dual-stack-svc || true
