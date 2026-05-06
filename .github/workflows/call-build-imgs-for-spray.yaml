@@ -12,6 +12,10 @@ on:
       KUBE_VERSION:
         required: false
         type: string
+      FORCE_REBUILD:
+        required: false
+        type: boolean
+        default: false
   workflow_dispatch:
     inputs:
       SPRAY_REF:
@@ -21,6 +25,10 @@ on:
         required: true
         type: string
         default: kubean-io
+      FORCE_REBUILD:
+        required: false
+        type: boolean
+        default: false
 jobs:
   output-variable:
     runs-on: ubuntu-latest
@@ -63,6 +71,11 @@ jobs:
         id: check
         run: |
           echo "need_rebuild=true" >>$GITHUB_OUTPUT
+          force_rebuild=${{ inputs.FORCE_REBUILD }}
+          if [[ "${force_rebuild}" == "true" ]]; then
+            echo ">>>> FORCE_REBUILD is enabled, will rebuild kubespray base image"
+            exit 0
+          fi
           commit_short_sha=${{ needs.output-variable.outputs.image_tag_short_sha }}
           echo ">>>> commit_short_sha: ${commit_short_sha}"
           ghcr_token=$(curl https://ghcr.io/token\?scope\="repository:${{ inputs.REPO }}/kubespray:pull" | jq '.token' | tr -d '"')

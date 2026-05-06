@@ -3,10 +3,10 @@ name: KUBEAN_E2E_TEST_CI
 on:
   workflow_dispatch: #manual run
   workflow_call: # called by Auto Release CI 
-  schedule: 
-    - cron: '0 0 * * FRI' # on every weekend for P3 jobs in weekend with if condition (if: github.event.schedule == '0 0 * * FRI')
-    - cron: '0 7 * * *' # default: on every night for P2 jobs
-    - cron: '0 0 1 1 *' # next at 2024-01-01 00:00:00
+  schedule:
+    - cron: "0 0 * * FRI" # on every weekend for P3 jobs in weekend with if condition (if: github.event.schedule == '0 0 * * FRI')
+    - cron: "0 7 * * *" # default: on every night for P2 jobs
+    - cron: "0 0 1 1 *" # next at 2024-01-01 00:00:00
 
 env:
   VSPHERE_USER: ${{ secrets.VSPHERE_USER }}
@@ -44,7 +44,7 @@ jobs:
   centos_calico_airgap:
     #runs-on:  [self-hosted, offline] #for test
     runs-on: ubuntu-latest
-    needs: [get_helm_version, build-push-for-e2e]
+    needs: [ get_helm_version, build-push-for-e2e ]
     env:
       CONTAINER_TAG: ${{ needs.get_helm_version.outputs.CONTAINER_TAG }}
       HELM_CHART_VERSION: ${{ needs.get_helm_version.outputs.HELM_CHART_VERSION }}
@@ -65,17 +65,18 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v6
         with:
-          go-version: 1.24.3
+          go-version: 1.25.0
       - name: centos_calico_airgap
         run: |
           # export runner_name=${{ runner.name }}
           # bash ./hack/newE2E.sh
           echo "network online testcases"
 
-  centos_calico_online: # skip
+  centos_calico_online:
+    # skip
     #runs-on:  [self-hosted, online] #for test
     runs-on: ubuntu-latest
-    needs: [centos_calico_airgap, get_helm_version]
+    needs: [ centos_calico_airgap, get_helm_version ]
     env:
       CONTAINER_TAG: ${{ needs.get_helm_version.outputs.CONTAINER_TAG }}
       HELM_CHART_VERSION: ${{ needs.get_helm_version.outputs.HELM_CHART_VERSION }}
@@ -97,7 +98,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v6
         with:
-          go-version: 1.24.3
+          go-version: 1.25.0
       - name: centos_calico_online
         continue-on-error: ${{ vars.CENTOS_CALICO_ONLINE_ALLOW_FAILURE != 'false' }}
         run: |
@@ -105,11 +106,12 @@ jobs:
           # bash ./hack/newE2E.sh
           echo "network online testcases"
 
-  centos_cilium_online: # skip
+  centos_cilium_online:
+    # skip
     # This is actually e2e_offline action
     # runs-on:  [self-hosted, offline] #for test
     runs-on: ubuntu-latest # for test
-    needs: [centos_calico_airgap, get_helm_version]
+    needs: [ centos_calico_airgap, get_helm_version ]
     env:
       CONTAINER_TAG: ${{ needs.get_helm_version.outputs.CONTAINER_TAG }}
       HELM_CHART_VERSION: ${{ needs.get_helm_version.outputs.HELM_CHART_VERSION }}
@@ -134,7 +136,7 @@ jobs:
           fetch-depth: 0
       # - uses: actions/setup-go@v6
       #   with:
-      #     go-version: 1.24.3
+      #     go-version: 1.25.0
       - name: centos_cilium_online
         continue-on-error: ${{ vars.CENTOS_CILIUM_ONLINE_ALLOW_FAILURE != 'false' }}
         run: |
@@ -144,8 +146,8 @@ jobs:
 
   centos_cilium_airgap:
     # runs-on:  [self-hosted, offline]
-    runs-on:  [self-hosted, online] # test network testcases online in Jun
-    needs: [centos_calico_airgap, get_helm_version]
+    runs-on: [ self-hosted, online ] # test network testcases online in Jun
+    needs: [ centos_calico_airgap, get_helm_version ]
     env:
       CONTAINER_TAG: ${{ needs.get_helm_version.outputs.CONTAINER_TAG }}
       HELM_CHART_VERSION: ${{ needs.get_helm_version.outputs.HELM_CHART_VERSION }}
@@ -167,7 +169,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v6
         with:
-          go-version: 1.24.3
+          go-version: 1.25.0
       - name: centos_cilium_airgap
         continue-on-error: ${{ vars.CENTOS_CILIUM_AIRGAP_ALLOW_FAILURE != 'false' }}
         run: |
@@ -177,8 +179,8 @@ jobs:
           bash ./hack/newE2E.sh
 
   redhat_calico_online:
-    runs-on: [self-hosted, online]
-    needs: [centos_calico_airgap, get_helm_version]
+    runs-on: [ self-hosted, online ]
+    needs: [ centos_calico_airgap, get_helm_version ]
     env:
       CONTAINER_TAG: ${{ needs.get_helm_version.outputs.CONTAINER_TAG }}
       HELM_CHART_VERSION: ${{ needs.get_helm_version.outputs.HELM_CHART_VERSION }}
@@ -201,7 +203,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v6
         with:
-          go-version: 1.24.3
+          go-version: 1.25.0
       - name: redhat_calico_online
         continue-on-error: ${{ vars.REDHAT_CALICO_ONLINE_ALLOW_FAILURE != 'false' }}
         run: |
@@ -209,8 +211,8 @@ jobs:
           bash ./hack/newE2E.sh
 
   redhat_calico_airgap:
-    runs-on:  [self-hosted, offline]
-    needs: [centos_calico_airgap, get_helm_version]
+    runs-on: [ self-hosted, offline ]
+    needs: [ centos_calico_airgap, get_helm_version ]
     env:
       CONTAINER_TAG: ${{ needs.get_helm_version.outputs.CONTAINER_TAG }}
       HELM_CHART_VERSION: ${{ needs.get_helm_version.outputs.HELM_CHART_VERSION }}
@@ -232,7 +234,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v6
         with:
-          go-version: 1.24.3
+          go-version: 1.25.0
       - name: redhat_calico_airgap
         continue-on-error: ${{ vars.REDHAT_CALICO_AIRGAP_ALLOW_FAILURE != 'false' }}
         run: |
@@ -240,8 +242,8 @@ jobs:
           bash ./hack/newE2E.sh
 
   redhat_cilium_airgap:
-    runs-on:  [self-hosted, offline]
-    needs: [centos_calico_airgap, get_helm_version]
+    runs-on: [ self-hosted, offline ]
+    needs: [ centos_calico_airgap, get_helm_version ]
     env:
       CONTAINER_TAG: ${{ needs.get_helm_version.outputs.CONTAINER_TAG }}
       HELM_CHART_VERSION: ${{ needs.get_helm_version.outputs.HELM_CHART_VERSION }}
@@ -263,7 +265,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v6
         with:
-          go-version: 1.24.3
+          go-version: 1.25.0
       - name: redhat_cilium_airgap
         continue-on-error: ${{ vars.REDHAT_CILIUM_AIRGAP_ALLOW_FAILURE != 'false' }}
         run: |
@@ -271,8 +273,17 @@ jobs:
           bash ./hack/newE2E.sh
 
   redhat_cilium_online:
-    needs: [get_helm_version, centos_calico_online, centos_cilium_online, centos_cilium_airgap, redhat_calico_online, redhat_calico_airgap, redhat_cilium_airgap]
-    runs-on:  [self-hosted, online]
+    needs:
+      [
+        get_helm_version,
+        centos_calico_online,
+        centos_cilium_online,
+        centos_cilium_airgap,
+        redhat_calico_online,
+        redhat_calico_airgap,
+        redhat_cilium_airgap,
+      ]
+    runs-on: [ self-hosted, online ]
     env:
       CONTAINER_TAG: ${{ needs.get_helm_version.outputs.CONTAINER_TAG }}
       HELM_CHART_VERSION: ${{ needs.get_helm_version.outputs.HELM_CHART_VERSION }}
@@ -295,7 +306,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v6
         with:
-          go-version: 1.24.3
+          go-version: 1.25.0
       - name: redhat_cilium_online
         continue-on-error: ${{ vars.REDHAT_CILIUM_ONLINE_ALLOW_FAILURE != 'false' }}
         run: |
@@ -303,8 +314,17 @@ jobs:
           bash ./hack/newE2E.sh
 
   kylin_calico_online:
-    needs: [get_helm_version, centos_calico_online, centos_cilium_online, centos_cilium_airgap, redhat_calico_online, redhat_calico_airgap, redhat_cilium_airgap]
-    runs-on:  [self-hosted, online]
+    needs:
+      [
+        get_helm_version,
+        centos_calico_online,
+        centos_cilium_online,
+        centos_cilium_airgap,
+        redhat_calico_online,
+        redhat_calico_airgap,
+        redhat_cilium_airgap,
+      ]
+    runs-on: [ self-hosted, online ]
     env:
       CONTAINER_TAG: ${{ needs.get_helm_version.outputs.CONTAINER_TAG }}
       HELM_CHART_VERSION: ${{ needs.get_helm_version.outputs.HELM_CHART_VERSION }}
@@ -327,7 +347,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v6
         with:
-          go-version: 1.24.3
+          go-version: 1.25.0
       - name: kylin_calico_online
         continue-on-error: ${{ vars.KYLIN_CALICO_ONLINE_ALLOW_FAILURE != 'false' }}
         run: |
@@ -335,8 +355,17 @@ jobs:
           bash ./hack/newE2E.sh
 
   kylin_calico_airgap:
-    needs: [get_helm_version, centos_calico_online, centos_cilium_online, centos_cilium_airgap, redhat_calico_online, redhat_calico_airgap, redhat_cilium_airgap]
-    runs-on:  [self-hosted, offline]
+    needs:
+      [
+        get_helm_version,
+        centos_calico_online,
+        centos_cilium_online,
+        centos_cilium_airgap,
+        redhat_calico_online,
+        redhat_calico_airgap,
+        redhat_cilium_airgap,
+      ]
+    runs-on: [ self-hosted, offline ]
     env:
       CONTAINER_TAG: ${{ needs.get_helm_version.outputs.CONTAINER_TAG }}
       HELM_CHART_VERSION: ${{ needs.get_helm_version.outputs.HELM_CHART_VERSION }}
@@ -359,7 +388,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v6
         with:
-          go-version: 1.24.3
+          go-version: 1.25.0
       - name: kylin_calico_airgap
         continue-on-error: ${{ vars.KYLIN_CALICO_AIRGAP_ALLOW_FAILURE != 'false' }}
         run: |

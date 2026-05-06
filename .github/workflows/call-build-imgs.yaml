@@ -50,9 +50,11 @@ jobs:
       SPRAY_REF: ${{ needs.output-variable.outputs.spray_version }}
       REPO: ${{ needs.output-variable.outputs.repo }}
       KUBE_VERSION: ${{ needs.output-variable.outputs.kube_version }}
+      # default to force rebuild; only disable when vars.KUBEAN_FORCE_REBUILD is explicitly set to 'false'
+      FORCE_REBUILD: ${{ vars.KUBEAN_FORCE_REBUILD != 'false' }}
 
   build-kubean-imgs:
-    needs: [output-variable, build-spray-imgs]
+    needs: [ output-variable, build-spray-imgs ]
     uses: ./.github/workflows/call-build-imgs-for-kubean.yaml
     secrets: inherit
     with:
@@ -62,7 +64,7 @@ jobs:
 
   security-scanning:
     runs-on: ubuntu-latest
-    needs: [build-kubean-imgs, output-variable]
+    needs: [ build-kubean-imgs, output-variable ]
     steps:
       - uses: actions/checkout@v6.0.2
         with:

@@ -50,7 +50,7 @@ jobs:
 
       - uses: actions/setup-go@v6
         with:
-          go-version: 1.24.3
+          go-version: 1.25.0
 
       - name: static check
         uses: golangci/golangci-lint-action@v9
@@ -72,13 +72,13 @@ jobs:
       - name: Run Trivy vulnerability scanner in fs mode
         uses: aquasecurity/trivy-action@0.35.0
         with:
-          scan-type: 'fs'
-          scan-ref: '.'
+          scan-type: "fs"
+          scan-ref: "."
           scanners: secret
           trivy-config: .trivy.yml
 
   unit-test:
-    needs: [ static-check,get_ref ]
+    needs: [ static-check, get_ref ]
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -92,14 +92,14 @@ jobs:
 
       - uses: actions/setup-go@v6
         with:
-          go-version: 1.24.3
+          go-version: 1.25.0
 
       - name: unit test
         run: |
           make test
 
   build-push-for-e2e:
-    needs: [ unit-test,get_ref ]
+    needs: [ unit-test, get_ref ]
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -128,10 +128,12 @@ jobs:
 
       - name: Log in to registry
         # This is where you will update the PAT to GITHUB_TOKEN
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $
+          --password-stdin
 
       - name: kubean-operator Build image
-        run: docker build . --file ./build/images/$KUBEAN_OPERATOR_IMAGE_NAME/Dockerfile --tag $KUBEAN_OPERATOR_IMAGE_NAME
+        run: docker build . --file ./build/images/$KUBEAN_OPERATOR_IMAGE_NAME/Dockerfile
+          --tag $KUBEAN_OPERATOR_IMAGE_NAME
 
       - name: kubean-operator Push image
         run: |
@@ -146,7 +148,9 @@ jobs:
           docker push $IMAGE_ID:$VERSION
 
       - name: kubean-admission Build image
-        run: docker build . --file ./build/images/$KUBEAN_ADMISSION_IMAGE_NAME/Dockerfile --tag $KUBEAN_ADMISSION_IMAGE_NAME
+        run: docker build . --file
+          ./build/images/$KUBEAN_ADMISSION_IMAGE_NAME/Dockerfile --tag
+          $KUBEAN_ADMISSION_IMAGE_NAME
 
       - name: kubean-admission Push image
         run: |
@@ -161,7 +165,8 @@ jobs:
           docker push $IMAGE_ID:$VERSION
 
       - name: spray-job Build image
-        run: docker build . --file ./build/images/$SPRAY_JOB_IMAGE_NAME/Dockerfile --tag $SPRAY_JOB_IMAGE_NAME  --build-arg SPRAY_TAG=${{ env.KUBESPRAY_TAG }}
+        run: docker build . --file ./build/images/$SPRAY_JOB_IMAGE_NAME/Dockerfile --tag
+          $SPRAY_JOB_IMAGE_NAME  --build-arg SPRAY_TAG=${{ env.KUBESPRAY_TAG }}
 
       - name: spray-job Push image
         run: |
@@ -176,7 +181,9 @@ jobs:
           docker push $IMAGE_ID:$VERSION
 
       - name: airgap-patch Build image
-        run: docker build . --file ./build/images/$AIRGAP_PATCH_IMAGE_NAME/Dockerfile --tag $AIRGAP_PATCH_IMAGE_NAME  --build-arg SPRAY_TAG=${{ env.KUBESPRAY_TAG }}
+        run: docker build . --file ./build/images/$AIRGAP_PATCH_IMAGE_NAME/Dockerfile
+          --tag $AIRGAP_PATCH_IMAGE_NAME  --build-arg SPRAY_TAG=${{
+          env.KUBESPRAY_TAG }}
 
       - name: airgap-patch Push image
         run: |
@@ -191,8 +198,8 @@ jobs:
           docker push $IMAGE_ID:$VERSION
 
   e2e:
-    needs: [ build-push-for-e2e,get_ref ]
-    runs-on: [self-hosted, online]
+    needs: [ build-push-for-e2e, get_ref ]
+    runs-on: [ self-hosted, online ]
     timeout-minutes: 900
     permissions:
       packages: write
@@ -205,7 +212,7 @@ jobs:
           ref: ${{ needs.get_ref.outputs.ref }}
       - uses: actions/setup-go@v6
         with:
-          go-version: 1.24.3
+          go-version: 1.25.0
       - name: e2e
         run: |
           CONTAINER_TAG="$(git describe --tags --abbrev=8 --dirty)-e2e"

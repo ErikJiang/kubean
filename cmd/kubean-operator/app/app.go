@@ -28,6 +28,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	klog "k8s.io/klog/v2"
 	controllerruntime "sigs.k8s.io/controller-runtime"
+	controllercache "sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 )
 
@@ -79,7 +80,11 @@ func StartManager(ctx context.Context, opt *Options) error {
 		LeaderElectionResourceLock: opt.LeaderElection.ResourceLock,
 		HealthProbeBindAddress:     net.JoinHostPort(opt.BindAddress, strconv.Itoa(opt.SecurePort)),
 		LivenessEndpointName:       "/healthz",
-		Namespace:                  util.GetCurrentNSOrDefault(),
+		Cache: controllercache.Options{
+			DefaultNamespaces: map[string]controllercache.Config{
+				util.GetCurrentNSOrDefault(): {},
+			},
+		},
 	})
 	if err != nil {
 		klog.Errorf("Failed to build controllerManager ,%s", err)

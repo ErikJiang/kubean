@@ -20,15 +20,17 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	k8stesting "k8s.io/client-go/testing"
+	"k8s.io/client-go/tools/events"
 	"k8s.io/client-go/tools/record"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/conversion"
 
 	localartifactsetv1alpha1 "github.com/kubean-io/kubean-api/apis/localartifactset/v1alpha1"
 	manifestv1alpha1 "github.com/kubean-io/kubean-api/apis/manifest/v1alpha1"
@@ -725,6 +727,10 @@ func (MockClusterForManager) GetCache() cache.Cache { return nil }
 
 func (MockClusterForManager) GetEventRecorderFor(name string) record.EventRecorder { return nil }
 
+func (MockClusterForManager) GetEventRecorder(name string) events.EventRecorder { return nil }
+
+func (MockClusterForManager) GetHTTPClient() *http.Client { return nil }
+
 func (MockClusterForManager) GetRESTMapper() meta.RESTMapper { return nil }
 
 func (MockClusterForManager) GetAPIReader() client.Reader { return nil }
@@ -739,7 +745,7 @@ func (MockManager) Add(manager.Runnable) error { return nil }
 
 func (MockManager) Elected() <-chan struct{} { return nil }
 
-func (MockManager) AddMetricsExtraHandler(path string, handler http.Handler) error { return nil }
+func (MockManager) AddMetricsServerExtraHandler(path string, handler http.Handler) error { return nil }
 
 func (MockManager) AddHealthzCheck(name string, check healthz.Checker) error { return nil }
 
@@ -747,10 +753,12 @@ func (MockManager) AddReadyzCheck(name string, check healthz.Checker) error { re
 
 func (MockManager) Start(ctx context.Context) error { return nil }
 
-func (MockManager) GetWebhookServer() *webhook.Server { return nil }
+func (MockManager) GetWebhookServer() webhook.Server { return nil }
 
 func (MockManager) GetLogger() logr.Logger { return logr.Logger{} }
 
-func (MockManager) GetControllerOptions() v1alpha1.ControllerConfigurationSpec {
-	return v1alpha1.ControllerConfigurationSpec{}
+func (MockManager) GetControllerOptions() config.Controller {
+	return config.Controller{}
 }
+
+func (MockManager) GetConverterRegistry() conversion.Registry { return nil }

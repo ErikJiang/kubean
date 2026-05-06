@@ -16,13 +16,15 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	k8stesting "k8s.io/client-go/testing"
+	"k8s.io/client-go/tools/events"
 	"k8s.io/client-go/tools/record"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
-	"sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/conversion"
 
 	"github.com/kubean-io/kubean-api/apis"
 	clusterv1alpha1 "github.com/kubean-io/kubean-api/apis/cluster/v1alpha1"
@@ -464,7 +466,12 @@ func newFakeClient() client.Client {
 	if err := clusterv1alpha1.AddToScheme(sch); err != nil {
 		panic(err)
 	}
-	client := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(&clusteroperationv1alpha1.ClusterOperation{}).WithRuntimeObjects(&clusterv1alpha1.Cluster{}).Build()
+	client := fake.NewClientBuilder().
+		WithScheme(sch).
+		WithRuntimeObjects(&clusteroperationv1alpha1.ClusterOperation{}).
+		WithRuntimeObjects(&clusterv1alpha1.Cluster{}).
+		WithStatusSubresource(&clusteroperationv1alpha1.ClusterOperation{}, &clusterv1alpha1.Cluster{}).
+		Build()
 	return client
 }
 
@@ -678,6 +685,10 @@ func (MockClusterForManager) GetCache() cache.Cache { return nil }
 
 func (MockClusterForManager) GetEventRecorderFor(name string) record.EventRecorder { return nil }
 
+func (MockClusterForManager) GetEventRecorder(name string) events.EventRecorder { return nil }
+
+func (MockClusterForManager) GetHTTPClient() *http.Client { return nil }
+
 func (MockClusterForManager) GetRESTMapper() meta.RESTMapper { return nil }
 
 func (MockClusterForManager) GetAPIReader() client.Reader { return nil }
@@ -692,7 +703,7 @@ func (MockManager) Add(manager.Runnable) error { return nil }
 
 func (MockManager) Elected() <-chan struct{} { return nil }
 
-func (MockManager) AddMetricsExtraHandler(path string, handler http.Handler) error { return nil }
+func (MockManager) AddMetricsServerExtraHandler(path string, handler http.Handler) error { return nil }
 
 func (MockManager) AddHealthzCheck(name string, check healthz.Checker) error { return nil }
 
@@ -700,10 +711,12 @@ func (MockManager) AddReadyzCheck(name string, check healthz.Checker) error { re
 
 func (MockManager) Start(ctx context.Context) error { return nil }
 
-func (MockManager) GetWebhookServer() *webhook.Server { return nil }
+func (MockManager) GetWebhookServer() webhook.Server { return nil }
 
 func (MockManager) GetLogger() logr.Logger { return logr.Logger{} }
 
-func (MockManager) GetControllerOptions() v1alpha1.ControllerConfigurationSpec {
-	return v1alpha1.ControllerConfigurationSpec{}
+func (MockManager) GetControllerOptions() config.Controller {
+	return config.Controller{}
 }
+
+func (MockManager) GetConverterRegistry() conversion.Registry { return nil }

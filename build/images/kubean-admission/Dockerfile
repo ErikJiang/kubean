@@ -1,9 +1,9 @@
-FROM --platform=$BUILDPLATFORM golang:1.24.13 AS build
+FROM --platform=$BUILDPLATFORM golang:1.25.9 AS build
 
 WORKDIR /kubean
 
 ENV GO111MODULE=on \
-    GOPROXY=https://goproxy.cn,direct
+  GOPROXY=https://goproxy.cn,direct
 
 COPY . .
 
