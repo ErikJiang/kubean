@@ -5,7 +5,7 @@ on:
   # At 00:00 on every saturday（Beijing Time).
   workflow_dispatch:
   schedule:
-    - cron: '0 8 * * 6'
+    - cron: "0 8 * * 6"
 
 env:
   VSPHERE_USER: ${{ secrets.VSPHERE_USER }}
@@ -19,7 +19,7 @@ jobs:
 
   schedule_os_e2e:
     needs: build-push-for-e2e
-    runs-on: [self-hosted, online]
+    runs-on: [ self-hosted, online ]
     permissions:
       packages: write
       contents: read
@@ -30,7 +30,7 @@ jobs:
 
       - uses: actions/setup-go@v6
         with:
-          go-version: 1.24.3
+          go-version: 1.25.0
 
       - name: os_compitable_e2e_schedule
         run: |
