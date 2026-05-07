@@ -66,6 +66,11 @@ func CreateHTTPSCASecretWithLock(ctx context.Context, client kubernetes.Interfac
 			klog.Errorf("webhook RunWithLeaseLock but error %v", r)
 		}
 	}()
+
+	if client == nil {
+		klog.Warning("kubernetes client is nil, skip CreateHTTPSCASecretWithLock")
+		return nil
+	}
 	lock := &resourcelock.LeaseLock{
 		LeaseMeta: metav1.ObjectMeta{
 			Name:      "lease-for-kubean-webhook-ca-create",
