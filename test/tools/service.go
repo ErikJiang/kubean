@@ -72,7 +72,7 @@ func SaveKubeConf(kindConfig *restclient.Config, clusterName, configToSavePath s
 }
 
 func WaitPodSInKubeSystemBeRunning(kubeClient *kubernetes.Clientset, timeTotalSecond time.Duration, ops ...time.Duration) {
-	klog.Info("---- Waiting Pods in %s to be Running ---", KubeSystemNamespace)
+	klog.Infof("---- Waiting Pods in %s to be Running ---", KubeSystemNamespace)
 	var timeInterval time.Duration = 60
 	if len(ops) != 0 {
 		timeInterval = ops[0]
@@ -127,7 +127,7 @@ func GenerateClusterClient(localKubeConfigPath string) *kubernetes.Clientset {
 	return cluster1Client
 }
 func WaitPodBeRunning(kubeClient *kubernetes.Clientset, namespace, podName string, timeTotalSecond time.Duration, ops ...time.Duration) *corev1.Pod {
-	klog.Info("---- Waiting Pods in [%s] to be Running ---", namespace)
+	klog.Infof("---- Waiting Pods in [%s] to be Running ---", namespace)
 	var timeInterval time.Duration = 10
 	var pod1 *corev1.Pod
 	if len(ops) != 0 {

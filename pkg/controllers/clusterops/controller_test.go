@@ -863,9 +863,9 @@ func TestReconcile(t *testing.T) {
 			args: func() bool {
 				controller := genController()
 				result, _ := controller.Reconcile(context.Background(), controllerruntime.Request{NamespacedName: types.NamespacedName{Name: "cluster1"}})
-				return result.Requeue
+				return result.RequeueAfter == 0
 			},
-			want: false,
+			want: true,
 		},
 		{
 			name: "clusterOps and cluster found successfully but not ValidImageName",
@@ -918,7 +918,7 @@ func TestReconcile(t *testing.T) {
 				result, _ := controller.Reconcile(context.Background(), controllerruntime.Request{NamespacedName: types.NamespacedName{Name: "my_kubean_ops_cluster"}})
 				opsResult := &clusteroperationv1alpha1.ClusterOperation{}
 				controller.Client.Get(context.Background(), types.NamespacedName{Name: "my_kubean_ops_cluster"}, opsResult)
-				return result.Requeue == false && opsResult.Status.Status == clusteroperationv1alpha1.FailedStatus
+				return result.RequeueAfter == 0 && opsResult.Status.Status == clusteroperationv1alpha1.FailedStatus
 			},
 			want: true,
 		},
@@ -972,7 +972,7 @@ func TestReconcile(t *testing.T) {
 				result, _ := controller.Reconcile(context.Background(), controllerruntime.Request{NamespacedName: types.NamespacedName{Name: "my_kubean_ops_cluster"}})
 				opsResult := &clusteroperationv1alpha1.ClusterOperation{}
 				controller.Client.Get(context.Background(), types.NamespacedName{Name: "my_kubean_ops_cluster"}, opsResult)
-				return result.Requeue == false && opsResult.Status.Status == clusteroperationv1alpha1.FailedStatus
+				return result.RequeueAfter == 0 && opsResult.Status.Status == clusteroperationv1alpha1.FailedStatus
 			},
 			want: true,
 		},

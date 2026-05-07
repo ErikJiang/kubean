@@ -61,7 +61,18 @@ func (c *Controller) MergeManifestsStatus(localartifactset *localartifactsetv1al
 			component.VersionRange = util.UnifyVersions(component.VersionRange)
 		}
 		klog.Infof("Update manifest status for %s since %s", manifest.Name, localartifactset.Name)
-		if _, err := c.InfoManifestClientSet.KubeanV1alpha1().Manifests().UpdateStatus(context.Background(), manifest, metav1.UpdateOptions{}); err != nil {
+		// fetch the latest manifest object from API server before updating status
+		existing, err := c.InfoManifestClientSet.KubeanV1alpha1().Manifests().Get(context.Background(), manifest.Name, metav1.GetOptions{})
+		if apierrors.IsNotFound(err) {
+			// manifest not found in API server, skip
+			klog.Warningf("manifest %s not found in API server, skip status update", manifest.Name)
+			continue
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to merge status for manifest %s, %v", manifest.Name, err)
+		}
+		existing.Status = manifest.Status
+		if _, err := c.InfoManifestClientSet.KubeanV1alpha1().Manifests().UpdateStatus(context.Background(), existing, metav1.UpdateOptions{}); err != nil {
 			return nil, fmt.Errorf("failed to merge status for manifest %s, %v", manifest.Name, err)
 		}
 	}

@@ -526,7 +526,7 @@ func TestReconcile(t *testing.T) {
 				result, _ := controller.Reconcile(context.Background(), controllerruntime.Request{NamespacedName: types.NamespacedName{Name: offlineVersionData.Name}})
 				localartifactset, _ := controller.LocalArtifactSetClientSet.KubeanV1alpha1().LocalArtifactSets().Get(context.Background(), offlineVersionData.Name, metav1.GetOptions{})
 				release, ok := localartifactset.Labels[constants.KeySprayRelease]
-				return ok == true && release == "master" && result.Requeue == false && result.RequeueAfter == 0
+				return ok == true && release == "master" && result.RequeueAfter == 0
 			},
 			want: true,
 		},
@@ -540,7 +540,7 @@ func TestReconcile(t *testing.T) {
 					InfoManifestClientSet:     manifestv1alpha1fake.NewSimpleClientset(),
 				}
 				result, _ := controller.Reconcile(context.Background(), controllerruntime.Request{NamespacedName: types.NamespacedName{Name: "localartifact-1"}})
-				return result.Requeue == false && result.RequeueAfter == 0
+				return result.RequeueAfter == 0
 			},
 			want: true,
 		},
@@ -585,8 +585,9 @@ func TestReconcile(t *testing.T) {
 				}
 				controller.InfoManifestClientSet.KubeanV1alpha1().Manifests().Create(context.Background(), manifest, metav1.CreateOptions{})
 				result, _ := controller.Reconcile(context.Background(), controllerruntime.Request{NamespacedName: types.NamespacedName{Name: localartifactset.Name}})
-				return result.Requeue == true && result.RequeueAfter == Loop
+				return result.RequeueAfter == Loop
 			},
+			want: true,
 		},
 		{
 			name: "no manifests that match the label of localartifactset",
@@ -619,8 +620,9 @@ func TestReconcile(t *testing.T) {
 					panic(err)
 				}
 				result, _ := controller.Reconcile(context.Background(), controllerruntime.Request{NamespacedName: types.NamespacedName{Name: localartifactset.Name}})
-				return result.Requeue == true && result.RequeueAfter == Loop
+				return result.RequeueAfter == Loop
 			},
+			want: true,
 		},
 		{
 			name: "manifest that match the label of localartifactset but not existent",
@@ -662,8 +664,9 @@ func TestReconcile(t *testing.T) {
 					panic(err)
 				}
 				result, _ := controller.Reconcile(context.Background(), controllerruntime.Request{NamespacedName: types.NamespacedName{Name: localartifactset.Name}})
-				return result.Requeue == true && result.RequeueAfter == Loop
+				return result.RequeueAfter == Loop
 			},
+			want: true,
 		},
 	}
 

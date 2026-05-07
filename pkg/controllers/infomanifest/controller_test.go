@@ -894,7 +894,7 @@ func TestReconcile(t *testing.T) {
 			name: "not for global-manifest",
 			args: func() bool {
 				result, err := controller.Reconcile(context.Background(), controllerruntime.Request{NamespacedName: types.NamespacedName{Name: constants.InfoManifestGlobal}})
-				return err == nil && result.Requeue == false
+				return err == nil && result.RequeueAfter == Loop
 			},
 			want: true,
 		},
@@ -922,7 +922,7 @@ func TestReconcile(t *testing.T) {
 					controller.LocalArtifactSetClientSet.KubeanV1alpha1().LocalArtifactSets().Delete(context.Background(), "localartifactset-3", metav1.DeleteOptions{})
 				}()
 				result, err := controller.Reconcile(context.Background(), controllerruntime.Request{NamespacedName: types.NamespacedName{Name: manifestName}})
-				return err == nil && result.Requeue == false
+				return err == nil && result.RequeueAfter == Loop
 			},
 			want: true,
 		},
@@ -981,7 +981,7 @@ func TestReconcile(t *testing.T) {
 					return true, nil, errors.NewNotFound(manifestv1alpha1.Resource("manifests"), "manifest-name")
 				})
 				result, err := controller.Reconcile(context.Background(), controllerruntime.Request{NamespacedName: types.NamespacedName{Name: manifestName}})
-				return err == nil && result.Requeue == false
+				return err == nil && result.RequeueAfter == 0
 			},
 			want: true,
 		},

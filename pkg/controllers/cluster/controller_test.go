@@ -494,7 +494,7 @@ func TestReconcile(t *testing.T) {
 			args: func() bool {
 				controller := genController()
 				result, _ := controller.Reconcile(context.Background(), controllerruntime.Request{NamespacedName: types.NamespacedName{Name: "cluster1"}})
-				return result.Requeue
+				return result.RequeueAfter > 0
 			},
 			needRequeue: false,
 		},
