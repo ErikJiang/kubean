@@ -107,7 +107,7 @@ func TestInitConfiguration(t *testing.T) {
 			if tt.existingCM != nil {
 				objects = append(objects, tt.existingCM)
 			}
-			clientset := fake.NewSimpleClientset(objects...)
+			clientset := fake.NewClientset(objects...)
 
 			// Mock errors if specified
 			if tt.getError != nil {

@@ -140,7 +140,7 @@ func TestUpdateOwnReference(t *testing.T) {
 		{
 			name: "already ownerReferences exist",
 			args: func() bool {
-				fakeClient := clientsetfake.NewSimpleClientset()
+				fakeClient := clientsetfake.NewClientset()
 				configMapList := []*apis.ConfigMapRef{{Name: "abc", NameSpace: "abc"}}
 				fakeClient.CoreV1().ConfigMaps(configMapList[0].NameSpace).Create(context.Background(), &corev1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
@@ -162,7 +162,7 @@ func TestUpdateOwnReference(t *testing.T) {
 		{
 			name: "empty RefData",
 			args: func() bool {
-				fakeClient := clientsetfake.NewSimpleClientset()
+				fakeClient := clientsetfake.NewClientset()
 				configMapList := []*apis.ConfigMapRef{{Name: "", NameSpace: ""}}
 				secretList := []*apis.SecretRef{{Name: "", NameSpace: ""}}
 				return UpdateOwnReference(fakeClient, configMapList, secretList, metav1.OwnerReference{}) == nil
@@ -172,7 +172,7 @@ func TestUpdateOwnReference(t *testing.T) {
 		{
 			name: "not found",
 			args: func() bool {
-				fakeClient := clientsetfake.NewSimpleClientset()
+				fakeClient := clientsetfake.NewClientset()
 				configMapList := []*apis.ConfigMapRef{{Name: "cm1", NameSpace: "abc"}}
 				secretList := []*apis.SecretRef{{Name: "secret1", NameSpace: "abc"}}
 				return UpdateOwnReference(fakeClient, configMapList, secretList, metav1.OwnerReference{}) == nil
@@ -182,7 +182,7 @@ func TestUpdateOwnReference(t *testing.T) {
 		{
 			name: "record exists",
 			args: func() bool {
-				fakeClient := clientsetfake.NewSimpleClientset()
+				fakeClient := clientsetfake.NewClientset()
 				fakeClient.CoreV1().ConfigMaps("abc").Create(context.Background(), &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{
 					Name:      "cm1",
 					Namespace: "abc",
@@ -209,7 +209,7 @@ func TestUpdateOwnReference(t *testing.T) {
 
 func TestFetchKubeanConfigProperty(t *testing.T) {
 	genClient := func() kubernetes.Interface {
-		return clientsetfake.NewSimpleClientset()
+		return clientsetfake.NewClientset()
 	}
 	tests := []struct {
 		name   string

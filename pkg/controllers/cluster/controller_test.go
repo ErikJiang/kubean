@@ -178,7 +178,7 @@ func TestCompareClusterConditions(t *testing.T) {
 func TestSortClusterOperationsByCreation(t *testing.T) {
 	controller := &Controller{
 		Client:              newFakeClient(),
-		ClientSet:           clientsetfake.NewSimpleClientset(),
+		ClientSet:           clientsetfake.NewClientset(),
 		KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
 		KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 	}
@@ -245,7 +245,7 @@ func Test_CleanExcessClusterOps(t *testing.T) {
 	OpsBackupNum := 5
 	controller := &Controller{
 		Client:              newFakeClient(),
-		ClientSet:           clientsetfake.NewSimpleClientset(),
+		ClientSet:           clientsetfake.NewClientset(),
 		KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
 		KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 	}
@@ -360,7 +360,7 @@ func Test_CleanExcessClusterOps(t *testing.T) {
 func Test_UpdateStatus(t *testing.T) {
 	controller := &Controller{
 		Client:              newFakeClient(),
-		ClientSet:           clientsetfake.NewSimpleClientset(),
+		ClientSet:           clientsetfake.NewClientset(),
 		KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
 		KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 	}
@@ -479,7 +479,7 @@ func TestReconcile(t *testing.T) {
 	genController := func() *Controller {
 		return &Controller{
 			Client:              newFakeClient(),
-			ClientSet:           clientsetfake.NewSimpleClientset(),
+			ClientSet:           clientsetfake.NewClientset(),
 			KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
 			KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 		}
@@ -637,7 +637,7 @@ func TestReconcile(t *testing.T) {
 func TestStart(t *testing.T) {
 	controller := &Controller{
 		Client:              newFakeClient(),
-		ClientSet:           clientsetfake.NewSimpleClientset(),
+		ClientSet:           clientsetfake.NewClientset(),
 		KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
 		KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 	}
@@ -649,7 +649,7 @@ func TestStart(t *testing.T) {
 func TestSetupWithManager(t *testing.T) {
 	controller := &Controller{
 		Client:              newFakeClient(),
-		ClientSet:           clientsetfake.NewSimpleClientset(),
+		ClientSet:           clientsetfake.NewClientset(),
 		KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
 		KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 	}

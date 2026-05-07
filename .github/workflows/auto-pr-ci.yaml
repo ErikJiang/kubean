@@ -55,7 +55,8 @@ jobs:
       - name: static check
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.1.0
+          install-mode: goinstall
+          version: v2.11.4
           args: --timeout=10m
 
       - name: install ansible requirements

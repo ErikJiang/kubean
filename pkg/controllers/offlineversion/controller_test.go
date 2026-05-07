@@ -77,7 +77,7 @@ func removeReactorFromTestingTake(obj interface{ RESTClient() rest.Interface }, 
 func TestMergeManifestsStatus(t *testing.T) {
 	controller := &Controller{
 		Client:                    newFakeClient(),
-		ClientSet:                 clientsetfake.NewSimpleClientset(),
+		ClientSet:                 clientsetfake.NewClientset(),
 		LocalArtifactSetClientSet: localartifactsetv1alpha1fake.NewSimpleClientset(),
 		InfoManifestClientSet:     manifestv1alpha1fake.NewSimpleClientset(),
 	}
@@ -446,7 +446,7 @@ func TestReconcile(t *testing.T) {
 			args: func() bool {
 				controller := &Controller{
 					Client:                    newFakeClient(),
-					ClientSet:                 clientsetfake.NewSimpleClientset(),
+					ClientSet:                 clientsetfake.NewClientset(),
 					LocalArtifactSetClientSet: localartifactsetv1alpha1fake.NewSimpleClientset(),
 					InfoManifestClientSet:     manifestv1alpha1fake.NewSimpleClientset(),
 				}
@@ -495,7 +495,7 @@ func TestReconcile(t *testing.T) {
 			args: func() bool {
 				controller := &Controller{
 					Client:                    newFakeClient(),
-					ClientSet:                 clientsetfake.NewSimpleClientset(),
+					ClientSet:                 clientsetfake.NewClientset(),
 					LocalArtifactSetClientSet: localartifactsetv1alpha1fake.NewSimpleClientset(),
 					InfoManifestClientSet:     manifestv1alpha1fake.NewSimpleClientset(),
 				}
@@ -535,7 +535,7 @@ func TestReconcile(t *testing.T) {
 			args: func() bool {
 				controller := &Controller{
 					Client:                    newFakeClient(),
-					ClientSet:                 clientsetfake.NewSimpleClientset(),
+					ClientSet:                 clientsetfake.NewClientset(),
 					LocalArtifactSetClientSet: localartifactsetv1alpha1fake.NewSimpleClientset(),
 					InfoManifestClientSet:     manifestv1alpha1fake.NewSimpleClientset(),
 				}
@@ -549,7 +549,7 @@ func TestReconcile(t *testing.T) {
 			args: func() bool {
 				controller := &Controller{
 					Client:                    newFakeClient(),
-					ClientSet:                 clientsetfake.NewSimpleClientset(),
+					ClientSet:                 clientsetfake.NewClientset(),
 					LocalArtifactSetClientSet: localartifactsetv1alpha1fake.NewSimpleClientset(),
 					InfoManifestClientSet:     manifestv1alpha1fake.NewSimpleClientset(),
 				}
@@ -593,7 +593,7 @@ func TestReconcile(t *testing.T) {
 			args: func() bool {
 				controller := &Controller{
 					Client:                    newFakeClient(),
-					ClientSet:                 clientsetfake.NewSimpleClientset(),
+					ClientSet:                 clientsetfake.NewClientset(),
 					LocalArtifactSetClientSet: localartifactsetv1alpha1fake.NewSimpleClientset(),
 					InfoManifestClientSet:     manifestv1alpha1fake.NewSimpleClientset(),
 				}
@@ -627,7 +627,7 @@ func TestReconcile(t *testing.T) {
 			args: func() bool {
 				controller := &Controller{
 					Client:                    newFakeClient(),
-					ClientSet:                 clientsetfake.NewSimpleClientset(),
+					ClientSet:                 clientsetfake.NewClientset(),
 					LocalArtifactSetClientSet: localartifactsetv1alpha1fake.NewSimpleClientset(),
 					InfoManifestClientSet:     manifestv1alpha1fake.NewSimpleClientset(),
 				}
@@ -679,7 +679,7 @@ func TestReconcile(t *testing.T) {
 func TestStart(t *testing.T) {
 	controller := &Controller{
 		Client:                    newFakeClient(),
-		ClientSet:                 clientsetfake.NewSimpleClientset(),
+		ClientSet:                 clientsetfake.NewClientset(),
 		LocalArtifactSetClientSet: localartifactsetv1alpha1fake.NewSimpleClientset(),
 		InfoManifestClientSet:     manifestv1alpha1fake.NewSimpleClientset(),
 	}
@@ -691,7 +691,7 @@ func TestStart(t *testing.T) {
 func TestSetupWithManager(t *testing.T) {
 	controller := &Controller{
 		Client:                    newFakeClient(),
-		ClientSet:                 clientsetfake.NewSimpleClientset(),
+		ClientSet:                 clientsetfake.NewClientset(),
 		LocalArtifactSetClientSet: localartifactsetv1alpha1fake.NewSimpleClientset(),
 		InfoManifestClientSet:     manifestv1alpha1fake.NewSimpleClientset(),
 	}
