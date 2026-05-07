@@ -8,15 +8,17 @@ set -o nounset
 set -o pipefail
 
 REPO_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
-GOLANGCI_LINT_VER="v2.1.0"
+GOLANGCI_LINT_VER="v2.11.4"
 
 cd "${REPO_ROOT}"
 source "hack/util.sh"
 
-# binary will be $(go env GOPATH)/bin/golangci-lint
-curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin $GOLANGCI_LINT_VER
+# Build golangci-lint with the active Go toolchain so the binary stays compatible
+# with the Go version declared by this repository.
+GOLANGCI_LINT_BIN="$(go env GOPATH)/bin/golangci-lint"
+GOBIN="$(go env GOPATH)/bin" go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@${GOLANGCI_LINT_VER}
 
-if golangci-lint run --fix --verbose; then
+if "${GOLANGCI_LINT_BIN}" run --fix --verbose; then
   echo 'Congratulations!  All Go source files have passed staticcheck.'
 else
   echo # print one empty line, separate from warning messages.

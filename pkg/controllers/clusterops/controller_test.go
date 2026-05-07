@@ -437,7 +437,7 @@ func TestNewKubesprayJob(t *testing.T) {
 	os.Setenv("POD_NAMESPACE", "mynamespace")
 	controller := Controller{
 		Client:                newFakeClient(),
-		ClientSet:             clientsetfake.NewSimpleClientset(),
+		ClientSet:             clientsetfake.NewClientset(),
 		InfoManifestClientSet: manifestv1alpha1fake.NewSimpleClientset(),
 	}
 	clusterOps := &clusteroperationv1alpha1.ClusterOperation{}
@@ -524,7 +524,7 @@ func TestController_HookCustomAction(t *testing.T) {
 	configmapActionSource := clusteroperationv1alpha1.ConfigMapActionSource
 	controller := Controller{
 		Client:                newFakeClient(),
-		ClientSet:             clientsetfake.NewSimpleClientset(),
+		ClientSet:             clientsetfake.NewClientset(),
 		InfoManifestClientSet: manifestv1alpha1fake.NewSimpleClientset(),
 	}
 	clusterOps := &clusteroperationv1alpha1.ClusterOperation{}
@@ -728,7 +728,7 @@ func TestIsValidImageName(t *testing.T) {
 func TestUpdateStatusForLabel(t *testing.T) {
 	controller := Controller{
 		Client:                newFakeClient(),
-		ClientSet:             clientsetfake.NewSimpleClientset(),
+		ClientSet:             clientsetfake.NewClientset(),
 		KubeanClusterSet:      clusterv1alpha1fake.NewSimpleClientset(),
 		KubeanClusterOpsSet:   clusteroperationv1alpha1fake.NewSimpleClientset(),
 		InfoManifestClientSet: manifestv1alpha1fake.NewSimpleClientset(),
@@ -782,7 +782,7 @@ func TestUpdateStatusForLabel(t *testing.T) {
 func TestGetServiceAccountName(t *testing.T) {
 	controller := Controller{
 		Client:                newFakeClient(),
-		ClientSet:             clientsetfake.NewSimpleClientset(),
+		ClientSet:             clientsetfake.NewClientset(),
 		KubeanClusterSet:      clusterv1alpha1fake.NewSimpleClientset(),
 		KubeanClusterOpsSet:   clusteroperationv1alpha1fake.NewSimpleClientset(),
 		InfoManifestClientSet: manifestv1alpha1fake.NewSimpleClientset(),
@@ -847,7 +847,7 @@ func TestReconcile(t *testing.T) {
 	genController := func() *Controller {
 		return &Controller{
 			Client:                newFakeClient(),
-			ClientSet:             clientsetfake.NewSimpleClientset(),
+			ClientSet:             clientsetfake.NewClientset(),
 			KubeanClusterSet:      clusterv1alpha1fake.NewSimpleClientset(),
 			KubeanClusterOpsSet:   clusteroperationv1alpha1fake.NewSimpleClientset(),
 			InfoManifestClientSet: manifestv1alpha1fake.NewSimpleClientset(),
@@ -1248,7 +1248,7 @@ func TestReconcile(t *testing.T) {
 func TestCreateKubeSprayJob(t *testing.T) {
 	controller := &Controller{
 		Client:                newFakeClient(),
-		ClientSet:             clientsetfake.NewSimpleClientset(),
+		ClientSet:             clientsetfake.NewClientset(),
 		KubeanClusterSet:      clusterv1alpha1fake.NewSimpleClientset(),
 		KubeanClusterOpsSet:   clusteroperationv1alpha1fake.NewSimpleClientset(),
 		InfoManifestClientSet: manifestv1alpha1fake.NewSimpleClientset(),
@@ -1403,7 +1403,7 @@ func TestCreateKubeSprayJob(t *testing.T) {
 func Test_CheckConfigMapExist(t *testing.T) {
 	controller := Controller{
 		Client:              newFakeClient(),
-		ClientSet:           clientsetfake.NewSimpleClientset(),
+		ClientSet:           clientsetfake.NewClientset(),
 		KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
 		KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 	}
@@ -1452,7 +1452,7 @@ func Test_CheckConfigMapExist(t *testing.T) {
 func Test_CheckSecretExist(t *testing.T) {
 	controller := Controller{
 		Client:              newFakeClient(),
-		ClientSet:           clientsetfake.NewSimpleClientset(),
+		ClientSet:           clientsetfake.NewClientset(),
 		KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
 		KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 	}
@@ -1501,7 +1501,7 @@ func Test_CheckSecretExist(t *testing.T) {
 func Test_CheckClusterDataRef(t *testing.T) {
 	controller := Controller{
 		Client:              newFakeClient(),
-		ClientSet:           clientsetfake.NewSimpleClientset(),
+		ClientSet:           clientsetfake.NewClientset(),
 		KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
 		KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 	}
@@ -1645,7 +1645,7 @@ func Test_CheckClusterDataRef(t *testing.T) {
 func Test_GetKuBeanCluster(t *testing.T) {
 	controller := Controller{
 		Client:              newFakeClient(),
-		ClientSet:           clientsetfake.NewSimpleClientset(),
+		ClientSet:           clientsetfake.NewClientset(),
 		KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
 		KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 	}
@@ -1689,7 +1689,7 @@ func Test_GetKuBeanCluster(t *testing.T) {
 func Test_TrySuspendPod(t *testing.T) {
 	controller := Controller{
 		Client:              newFakeClient(),
-		ClientSet:           clientsetfake.NewSimpleClientset(),
+		ClientSet:           clientsetfake.NewClientset(),
 		KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
 		KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 	}
@@ -1894,7 +1894,7 @@ func Test_GetRunningPodFromJob(t *testing.T) {
 	genController := func() Controller {
 		return Controller{
 			Client:              newFakeClient(),
-			ClientSet:           clientsetfake.NewSimpleClientset(),
+			ClientSet:           clientsetfake.NewClientset(),
 			KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
 			KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 		}
@@ -1993,7 +1993,7 @@ func Test_CreateEntryPointShellConfigMap(t *testing.T) {
 	genController := func() Controller {
 		return Controller{
 			Client:              newFakeClient(),
-			ClientSet:           clientsetfake.NewSimpleClientset(),
+			ClientSet:           clientsetfake.NewClientset(),
 			KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
 			KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 		}
@@ -2089,7 +2089,7 @@ func Test_CreateEntryPointShellConfigMap(t *testing.T) {
 func TestStart(t *testing.T) {
 	controller := Controller{
 		Client:              newFakeClient(),
-		ClientSet:           clientsetfake.NewSimpleClientset(),
+		ClientSet:           clientsetfake.NewClientset(),
 		KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
 		KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 	}
@@ -2101,7 +2101,7 @@ func TestStart(t *testing.T) {
 func Test_FetchJobStatus(t *testing.T) {
 	controller := Controller{
 		Client:              newFakeClient(),
-		ClientSet:           clientsetfake.NewSimpleClientset(),
+		ClientSet:           clientsetfake.NewClientset(),
 		KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
 		KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 	}
@@ -2304,7 +2304,7 @@ func Test_FetchJobStatus(t *testing.T) {
 func Test_CopyConfigMap(t *testing.T) {
 	controller := Controller{
 		Client:              newFakeClient(),
-		ClientSet:           clientsetfake.NewSimpleClientset(),
+		ClientSet:           clientsetfake.NewClientset(),
 		KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
 		KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 	}
@@ -2373,7 +2373,7 @@ func Test_CopyConfigMap(t *testing.T) {
 func Test_CopySecret(t *testing.T) {
 	controller := Controller{
 		Client:              newFakeClient(),
-		ClientSet:           clientsetfake.NewSimpleClientset(),
+		ClientSet:           clientsetfake.NewClientset(),
 		KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
 		KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 	}
@@ -2442,7 +2442,7 @@ func Test_CopySecret(t *testing.T) {
 func Test_BackUpDataRef(t *testing.T) {
 	controller := Controller{
 		Client:              newFakeClient(),
-		ClientSet:           clientsetfake.NewSimpleClientset(),
+		ClientSet:           clientsetfake.NewClientset(),
 		KubeanClusterSet:    clusterv1alpha1fake.NewSimpleClientset(),
 		KubeanClusterOpsSet: clusteroperationv1alpha1fake.NewSimpleClientset(),
 	}
@@ -2679,7 +2679,7 @@ func Test_BackUpDataRef(t *testing.T) {
 func Test_ProcessKubeanOperationImage(t *testing.T) {
 	controller := Controller{
 		Client:                newFakeClient(),
-		ClientSet:             clientsetfake.NewSimpleClientset(),
+		ClientSet:             clientsetfake.NewClientset(),
 		KubeanClusterSet:      clusterv1alpha1fake.NewSimpleClientset(),
 		KubeanClusterOpsSet:   clusteroperationv1alpha1fake.NewSimpleClientset(),
 		InfoManifestClientSet: manifestv1alpha1fake.NewSimpleClientset(),
@@ -2724,7 +2724,7 @@ func TestUpdateOperationOwnReferenceForCluster(t *testing.T) {
 	genController := func() *Controller {
 		return &Controller{
 			Client:                newFakeClient(),
-			ClientSet:             clientsetfake.NewSimpleClientset(),
+			ClientSet:             clientsetfake.NewClientset(),
 			KubeanClusterSet:      clusterv1alpha1fake.NewSimpleClientset(),
 			KubeanClusterOpsSet:   clusteroperationv1alpha1fake.NewSimpleClientset(),
 			InfoManifestClientSet: manifestv1alpha1fake.NewSimpleClientset(),
@@ -2813,7 +2813,7 @@ func TestUpdateOperationOwnReferenceForCluster(t *testing.T) {
 func Test_FetchGlobalManifestImageTag(t *testing.T) {
 	controller := Controller{
 		Client:                newFakeClient(),
-		ClientSet:             clientsetfake.NewSimpleClientset(),
+		ClientSet:             clientsetfake.NewClientset(),
 		KubeanClusterSet:      clusterv1alpha1fake.NewSimpleClientset(),
 		KubeanClusterOpsSet:   clusteroperationv1alpha1fake.NewSimpleClientset(),
 		InfoManifestClientSet: manifestv1alpha1fake.NewSimpleClientset(),
@@ -2865,7 +2865,7 @@ func Test_FetchGlobalManifestImageTag(t *testing.T) {
 func TestSetupWithManager(t *testing.T) {
 	controller := Controller{
 		Client:                newFakeClient(),
-		ClientSet:             clientsetfake.NewSimpleClientset(),
+		ClientSet:             clientsetfake.NewClientset(),
 		KubeanClusterSet:      clusterv1alpha1fake.NewSimpleClientset(),
 		KubeanClusterOpsSet:   clusteroperationv1alpha1fake.NewSimpleClientset(),
 		InfoManifestClientSet: manifestv1alpha1fake.NewSimpleClientset(),

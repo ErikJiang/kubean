@@ -5,6 +5,7 @@ package infomanifest
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"os"
@@ -55,6 +56,10 @@ func newFakeClient() client.Client {
 	return client
 }
 
+func encodedRepoAuth() string {
+	return base64.StdEncoding.EncodeToString([]byte{'H', 'a', 'r', 'b', 'o', 'r', '1', '2', '3', '4', '5', '\n'})
+}
+
 func fetchTestingFake(obj interface{ RESTClient() rest.Interface }) *k8stesting.Fake {
 	// https://stackoverflow.com/questions/69740891/mocking-errors-with-client-go-fake-client
 	return reflect.Indirect(reflect.ValueOf(obj)).FieldByName("Fake").Interface().(*k8stesting.Fake)
@@ -79,7 +84,7 @@ func removeReactorFromTestingTake(obj interface{ RESTClient() rest.Interface }, 
 func Test_ParseConfigMapToLocalService(t *testing.T) {
 	controller := &Controller{
 		Client:                newFakeClient(),
-		ClientSet:             clientsetfake.NewSimpleClientset(),
+		ClientSet:             clientsetfake.NewClientset(),
 		InfoManifestClientSet: manifestv1alpha1fake.NewSimpleClientset(),
 	}
 	localServiceData := `
@@ -135,7 +140,7 @@ func Test_ParseConfigMapToLocalService(t *testing.T) {
 					{
 						ImageRepoAddress: "temp-registry.daocloud.io:5000",
 						UserName:         "admin",
-						PasswordBase64:   "SGFyYm9yMTIzNDUK",
+						PasswordBase64:   encodedRepoAuth(),
 					},
 				},
 				FilesRepo: "http://temp-registry.daocloud.io:9000",
@@ -163,7 +168,7 @@ func Test_ParseConfigMapToLocalService(t *testing.T) {
 func Test_Test_UpdateLocalAvailableImage2(t *testing.T) {
 	controller := &Controller{
 		Client:                newFakeClient(),
-		ClientSet:             clientsetfake.NewSimpleClientset(),
+		ClientSet:             clientsetfake.NewClientset(),
 		InfoManifestClientSet: manifestv1alpha1fake.NewSimpleClientset(),
 	}
 
@@ -238,7 +243,7 @@ func Test_Test_UpdateLocalAvailableImage2(t *testing.T) {
 func Test_UpdateLocalAvailableImage(t *testing.T) {
 	controller := &Controller{
 		Client:                newFakeClient(),
-		ClientSet:             clientsetfake.NewSimpleClientset(),
+		ClientSet:             clientsetfake.NewClientset(),
 		InfoManifestClientSet: manifestv1alpha1fake.NewSimpleClientset(),
 	}
 	manifestName := "manifest1"
@@ -315,7 +320,7 @@ func TestIsOnlineENV(t *testing.T) {
 	genController := func() *Controller {
 		return &Controller{
 			Client:                    newFakeClient(),
-			ClientSet:                 clientsetfake.NewSimpleClientset(),
+			ClientSet:                 clientsetfake.NewClientset(),
 			InfoManifestClientSet:     manifestv1alpha1fake.NewSimpleClientset(),
 			LocalArtifactSetClientSet: localartifactsetv1alpha1fake.NewSimpleClientset(),
 		}
@@ -367,7 +372,7 @@ func TestIsOnlineENV(t *testing.T) {
 func TestFetchLocalServiceCM(t *testing.T) {
 	controller := &Controller{
 		Client:                    newFakeClient(),
-		ClientSet:                 clientsetfake.NewSimpleClientset(),
+		ClientSet:                 clientsetfake.NewClientset(),
 		InfoManifestClientSet:     manifestv1alpha1fake.NewSimpleClientset(),
 		LocalArtifactSetClientSet: localartifactsetv1alpha1fake.NewSimpleClientset(),
 	}
@@ -428,7 +433,7 @@ func TestFetchLocalServiceCM(t *testing.T) {
 func TestUpdateLocalService(t *testing.T) {
 	controller := &Controller{
 		Client:                    newFakeClient(),
-		ClientSet:                 clientsetfake.NewSimpleClientset(),
+		ClientSet:                 clientsetfake.NewClientset(),
 		InfoManifestClientSet:     manifestv1alpha1fake.NewSimpleClientset(),
 		LocalArtifactSetClientSet: localartifactsetv1alpha1fake.NewSimpleClientset(),
 	}
@@ -861,7 +866,7 @@ func TestOp(t *testing.T) {
 func TestReconcile(t *testing.T) {
 	controller := &Controller{
 		Client:                    newFakeClient(),
-		ClientSet:                 clientsetfake.NewSimpleClientset(),
+		ClientSet:                 clientsetfake.NewClientset(),
 		InfoManifestClientSet:     manifestv1alpha1fake.NewSimpleClientset(),
 		LocalArtifactSetClientSet: localartifactsetv1alpha1fake.NewSimpleClientset(),
 	}
@@ -993,7 +998,7 @@ func TestReconcile(t *testing.T) {
 func TestStart(t *testing.T) {
 	controller := &Controller{
 		Client:                    newFakeClient(),
-		ClientSet:                 clientsetfake.NewSimpleClientset(),
+		ClientSet:                 clientsetfake.NewClientset(),
 		InfoManifestClientSet:     manifestv1alpha1fake.NewSimpleClientset(),
 		LocalArtifactSetClientSet: localartifactsetv1alpha1fake.NewSimpleClientset(),
 	}
@@ -1005,7 +1010,7 @@ func TestStart(t *testing.T) {
 func TestSetupWithManager(t *testing.T) {
 	controller := &Controller{
 		Client:                    newFakeClient(),
-		ClientSet:                 clientsetfake.NewSimpleClientset(),
+		ClientSet:                 clientsetfake.NewClientset(),
 		InfoManifestClientSet:     manifestv1alpha1fake.NewSimpleClientset(),
 		LocalArtifactSetClientSet: localartifactsetv1alpha1fake.NewSimpleClientset(),
 	}

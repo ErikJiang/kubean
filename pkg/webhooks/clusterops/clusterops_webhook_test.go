@@ -186,7 +186,7 @@ func TestEnsureCASecretExist(t *testing.T) {
 		{
 			name: "create certs unsuccessfully",
 			args: func() bool {
-				fakeClientSet := clientsetfake.NewSimpleClientset()
+				fakeClientSet := clientsetfake.NewClientset()
 				err := EnsureCASecretExist(fakeClientSet, func() (*corev1.Secret, error) {
 					return nil, fmt.Errorf("failed")
 				})
@@ -197,7 +197,7 @@ func TestEnsureCASecretExist(t *testing.T) {
 		{
 			name: "good case",
 			args: func() bool {
-				fakeClientSet := clientsetfake.NewSimpleClientset()
+				fakeClientSet := clientsetfake.NewClientset()
 				err := EnsureCASecretExist(fakeClientSet, createHTTPSCAInSecret)
 				data, _ := fakeClientSet.CoreV1().Secrets(util.GetCurrentNSOrDefault()).Get(context.Background(), CAStoreSecret, metav1.GetOptions{})
 				return err == nil && len(data.Data) == 2
@@ -207,7 +207,7 @@ func TestEnsureCASecretExist(t *testing.T) {
 		{
 			name: "create secret unsuccessfully",
 			args: func() bool {
-				fakeClientSet := clientsetfake.NewSimpleClientset()
+				fakeClientSet := clientsetfake.NewClientset()
 				fetchTestingFake(fakeClientSet.CoreV1()).PrependReactor("create", "secrets", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 					return true, nil, fmt.Errorf("create secret but error")
 				})
@@ -240,7 +240,7 @@ func TestUpdateClusterOperationWebhook(t *testing.T) {
 				certsDir = strings.TrimRight(os.TempDir(), "/")
 				ClusterOperationWebhook = "my-webhook-abc"
 				CreateHTTPSCAFilesFromSecret(&corev1.Secret{})
-				fakeClientSet := clientsetfake.NewSimpleClientset()
+				fakeClientSet := clientsetfake.NewClientset()
 				EnsureCASecretExist(fakeClientSet, createHTTPSCAInSecret)
 				UpdateClusterOperationWebhook(fakeClientSet)
 				os.Remove(filepath.Join(certsDir, certFile))
@@ -259,7 +259,7 @@ func TestUpdateClusterOperationWebhook(t *testing.T) {
 				defer func() {
 					ClusterOperationWebhook = "kubean-admission-webhook"
 				}()
-				fakeClientSet := clientsetfake.NewSimpleClientset()
+				fakeClientSet := clientsetfake.NewClientset()
 				err := UpdateClusterOperationWebhook(fakeClientSet)
 				return err != nil && err.Error() == "ClusterOperationWebhook empty"
 			},
@@ -269,7 +269,7 @@ func TestUpdateClusterOperationWebhook(t *testing.T) {
 			name: "get secret unsuccessfully",
 			arg: func() bool {
 				certsDir = strings.TrimRight(os.TempDir(), "/")
-				fakeClientSet := clientsetfake.NewSimpleClientset()
+				fakeClientSet := clientsetfake.NewClientset()
 				EnsureCASecretExist(fakeClientSet, createHTTPSCAInSecret)
 				fetchTestingFake(fakeClientSet.CoreV1()).PrependReactor("get", "secrets", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 					return true, nil, fmt.Errorf("this is error")
@@ -284,7 +284,7 @@ func TestUpdateClusterOperationWebhook(t *testing.T) {
 			name: "create webhook unsuccessfully",
 			arg: func() bool {
 				certsDir = strings.TrimRight(os.TempDir(), "/")
-				fakeClientSet := clientsetfake.NewSimpleClientset()
+				fakeClientSet := clientsetfake.NewClientset()
 				EnsureCASecretExist(fakeClientSet, createHTTPSCAInSecret)
 				fetchTestingFake(fakeClientSet.AdmissionregistrationV1()).PrependReactor("create", "validatingwebhookconfigurations", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 					return true, nil, fmt.Errorf("create validatingwebhookconfigurations but error")
@@ -299,7 +299,7 @@ func TestUpdateClusterOperationWebhook(t *testing.T) {
 			name: "update webhook unsuccessfully",
 			arg: func() bool {
 				certsDir = strings.TrimRight(os.TempDir(), "/")
-				fakeClientSet := clientsetfake.NewSimpleClientset()
+				fakeClientSet := clientsetfake.NewClientset()
 				EnsureCASecretExist(fakeClientSet, createHTTPSCAInSecret)
 				fetchTestingFake(fakeClientSet.AdmissionregistrationV1()).PrependReactor("update", "validatingwebhookconfigurations", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 					return true, nil, fmt.Errorf("update validatingwebhookconfigurations but error")
@@ -317,7 +317,7 @@ func TestUpdateClusterOperationWebhook(t *testing.T) {
 			name: "unnecessarily update webhook when secret is the same",
 			arg: func() bool {
 				certsDir = strings.TrimRight(os.TempDir(), "/")
-				fakeClientSet := clientsetfake.NewSimpleClientset()
+				fakeClientSet := clientsetfake.NewClientset()
 				EnsureCASecretExist(fakeClientSet, createHTTPSCAInSecret)
 				fetchTestingFake(fakeClientSet.AdmissionregistrationV1()).PrependReactor("update", "validatingwebhookconfigurations", func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
 					return true, nil, fmt.Errorf("update validatingwebhookconfigurations but error")
@@ -545,7 +545,7 @@ func TestWaitForCASecretExist(t *testing.T) {
 		{
 			name: "good case",
 			args: func() bool {
-				fakeClientSet := clientsetfake.NewSimpleClientset()
+				fakeClientSet := clientsetfake.NewClientset()
 				go func() {
 					time.Sleep(time.Second)
 					EnsureCASecretExist(fakeClientSet, createHTTPSCAInSecret)
@@ -574,7 +574,7 @@ func TestCreateHTTPSCASecretWithLock(t *testing.T) {
 		{
 			name: "good case",
 			args: func() bool {
-				fakeClientSet := clientsetfake.NewSimpleClientset()
+				fakeClientSet := clientsetfake.NewClientset()
 				ctx, cancel := context.WithCancel(context.Background())
 				go func() {
 					time.Sleep(time.Second * 2)
